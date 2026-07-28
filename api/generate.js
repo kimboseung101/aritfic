@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export default async function handler(req, res) {
-  // CORS 설정
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -22,18 +21,19 @@ export default async function handler(req, res) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY가 Vercel 환경 변수에 설정되지 않았습니다.' });
+      return res.status(500).json({ error: 'GEMINI_API_KEY가 설정되지 않았습니다.' });
+    }
+
+    // 프론트엔드가 prompt, message, text, 또는 그냥 통째로 보낸 것 중 뭐든 찾아내도록 처리
+    const userPrompt = req.body?.prompt || req.body?.message || req.body?.text || (typeof req.body === 'string' ? req.body : null);
+
+    if (!userPrompt) {
+      return res.status(400).json({ error: '데이터를 받지 못했습니다. 요청 내용을 확인해주세요.' });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const prompt = req.body.message;
-
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt가 비어있습니다.' });
-    }
-
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent(prompt);
+    const result = await model.generateContent(userPrompt);
     const response = await result.response;
     const text = response.text();
 
