@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>프리미엄 피트니스 코칭 앱 (도감 5개 확장 버전)</title>
+    <title>프리미엄 피트니스 코칭 앱 (Gemini 3.1 Flash Lite 연동)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; }
@@ -33,8 +33,15 @@
         .routine-box { background: #eff6ff; border: 1px solid #dbeafe; padding: 18px; border-radius: 12px; margin-top: 18px; }
         .routine-btn-group { display: flex; gap: 10px; margin-top: 14px; }
 
-        .scanner-view { width: 100%; height: 200px; background: #0f172a; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px; margin-bottom: 15px; overflow: hidden; position: relative; }
+        .scanner-view { width: 100%; height: 220px; background: #0f172a; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px; margin-bottom: 15px; overflow: hidden; position: relative; }
         .scanner-view img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .ai-scanning-line { position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: #38bdf8; box-shadow: 0 0 10px #38bdf8; animation: scanMove 1.5s infinite ease-in-out; display: none; }
+        @keyframes scanMove {
+            0% { top: 0%; }
+            50% { top: 100%; }
+            100% { top: 0%; }
+        }
 
         .pedia-list { display: flex; flex-direction: column; gap: 10px; }
         .pedia-item { background: #fff; padding: 14px 18px; border-radius: 10px; cursor: pointer; border-left: 4px solid #2563eb; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border: 1px solid #f1f5f9; transition: transform 0.1s; }
@@ -50,6 +57,7 @@
         
         .chart-card { background: #ffffff; padding: 16px; border-radius: 14px; border: 1px solid #f1f5f9; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
         .chart-container { position: relative; height: 160px; width: 100%; }
+        .ai-result-box { margin-top: 15px; white-space: pre-wrap; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; line-height: 1.5; color: #334155; }
     </style>
 </head>
 <body>
@@ -98,25 +106,25 @@
             </div>
         </div>
 
-        <!-- 2번째 창: AI 기구 인식 스캐너 -->
+        <!-- 2번째 창: AI 기구 인식 스캐너 (Gemini 3.1 Flash Lite 연동) -->
         <div id="tab2" class="tab-pane">
-            <h2>AI 기구 인식 스캐너</h2>
+            <h2>AI 스마트 기구 인식 스캐너</h2>
             <div class="card">
                 <div class="scanner-view" id="scanner-view">
-                    [ 기구 사진을 업로드하면 정확하게 분석합니다 ]
+                    <div id="scanner-text">📷 운동기구 사진을 촬영하거나 업로드하세요</div>
+                    <div class="ai-scanning-line" id="scan-line"></div>
                 </div>
-                <input type="file" id="machine-img-input" accept="image/*" onchange="scanMachine(event)" style="display:none;">
-                <button class="primary-btn" onclick="document.getElementById('machine-img-input').click();">기구 사진 업로드 및 분석</button>
+                <input type="file" id="machine-img-input" accept="image/*" capture="environment" onchange="processAIScan(event)" style="display:none;">
+                <button class="primary-btn" onclick="document.getElementById('machine-img-input').click();">AI 기구 실시간 스캔 시작</button>
             </div>
             <div class="card" id="machine-info-card" style="display:none;">
-                <h3 id="mi-name" style="color:#2563eb; margin-bottom:10px; font-size:18px;"></h3>
-                <p style="font-size:14px; line-height:1.5;"><strong>사용법:</strong> <span id="mi-usage"></span></p>
-                <p style="font-size:14px; line-height:1.5; margin-top:10px;"><strong>주의사항:</strong> <span id="mi-caution" style="color:#dc2626;"></span></p>
+                <h3 style="color:#2563eb; margin-bottom:10px; font-size:18px;">🤖 Gemini 3.1 분석 결과</h3>
+                <div id="ai-scan-result-text" class="ai-result-box"></div>
                 <button class="primary-btn" style="background:#64748b; margin-top:16px;" onclick="resetScanner()">다시 스캔하기</button>
             </div>
         </div>
 
-        <!-- 3번째 창: 운동 도감 (5개씩 확장) -->
+        <!-- 3번째 창: 운동 도감 -->
         <div id="tab3" class="tab-pane">
             <h2>부위별 운동 도감</h2>
             <select id="pedia-part-select" onchange="renderPediaList()" style="margin-bottom:16px;">
@@ -208,6 +216,8 @@
     </nav>
 
     <script>
+        const GEMINI_API_KEY = "YOUR_API_KEY"; // 여기에 본인의 Gemini API 키를 입력하세요
+
         function switchTab(index) {
             const panes = document.querySelectorAll('.tab-pane');
             const items = document.querySelectorAll('.nav-item');
@@ -215,6 +225,7 @@
                 pane.classList.toggle('active', i === index);
                 items[i].classList.toggle('active', i === index);
             });
+            if(index === 2) renderPediaList();
             if(index === 3) initCharts();
         }
 
@@ -306,78 +317,61 @@
             document.getElementById('r-age').value = '';
         }
 
-        const machineDatabase = [
-            {
-                keywords: ["leg extension", "익스텐션", "하체", "무릎"],
-                name: "레그 익스텐션 & 레그 컬 머신 (Leg Extension)",
-                usage: "등받이에 등을 밀착하고 패드가 발목 아래에 오도록 맞춘 뒤, 무릎을 펴며 대퇴사두근(허벅지 앞쪽)을 수축시킵니다.",
-                caution: "무릎을 완전히 펴서 관절을 튕기지 말고, 천천히 저항을 느끼며 내리세요."
-            },
-            {
-                keywords: ["lat pulldown", "랫풀다운", "등", "풀다운"],
-                name: "랫 풀다운 머신 (Lat Pulldown)",
-                usage: "허벅지 패드를 단단히 고정하고 어깨너비보다 넓게 바를 잡아 쇄골 라인으로 당깁니다.",
-                caution: "허리를 과도하게 뒤로 젖히지 말고 광배근의 힘으로 당기세요."
-            },
-            {
-                keywords: ["stair", "천국의계단"],
-                name: "천국의 계단 (Stair Climber)",
-                usage: "상체를 곧게 세운 채 계단을 오르듯 페달을 밟아 유산소 운동을 수행합니다.",
-                caution: "손잡이에 체중을 과하게 싣지 않도록 주의하세요."
-            },
-            {
-                keywords: ["smith", "스미스머신"],
-                name: "스미스 머신 (Smith Machine)",
-                usage: "바벨 고정이 가능한 레일바를 이용해 스쿼트, 벤치프레스 등을 안전하게 수행합니다.",
-                caution: "바의 회전 잠금 해제 방향을 정확히 확인하세요."
-            },
-            {
-                keywords: ["leg press", "레그프레스"],
-                name: "레그 프레스 머신 (Leg Press)",
-                usage: "발판 중앙에 발을 올리고 무릎 각도가 90도가 되도록 내린 뒤 밀어냅니다.",
-                caution: "무릎을 완전히 펴서 잠그지 않도록 주의하세요."
-            }
-        ];
-
-        function scanMachine(event) {
+        // 진짜 Gemini 3.1 Flash Lite API 연동 스캐너 함수
+        async function processAIScan(event) {
             const view = document.getElementById('scanner-view');
+            const scanLine = document.getElementById('scan-line');
             const file = event.target.files[0];
             
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    view.innerHTML = `<img src="${e.target.result}" alt="업로드된 기구">`;
+            if (!file) return;
+
+            // 이미지 미리보기 표시 및 스캔 애니메이션 구동
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                view.innerHTML = `<img src="${e.target.result}" alt="업로드 기구"><div class="ai-scanning-line" id="scan-line" style="display:block;"></div>`;
+                
+                try {
+                    const base64Data = e.target.result.split(',')[1];
+                    const resultContainer = document.getElementById('ai-scan-result-text');
+                    document.getElementById('machine-info-card').style.display = 'none';
+                    resultContainer.innerText = "Gemini 3.1 Flash Lite가 사진을 분석하는 중입니다...";
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: "이 사진 속 운동기구를 분석하여 1. 기구의 정확한 이름, 2. 타겟 운동 부위, 3. 올바른 사용법, 4. 안전 주의사항을 보기 쉽게 정리해서 알려줘." },
+                                    { inline_data: { mime_type: file.type, data: base64Data } }
+                                ]
+                            }]
+                        })
+                    });
+
+                    const data = await response.json();
+                    if (data.candidates && data.candidates[0].content) {
+                        const aiOutput = data.candidates[0].content.parts[0].text;
+                        resultContainer.innerText = aiOutput;
+                        document.getElementById('machine-info-card').style.display = 'block';
+                    } else {
+                        resultContainer.innerText = "AI 분석 결과를 가져오지 못했습니다. API 키를 확인해주세요.";
+                        document.getElementById('machine-info-card').style.display = 'block';
+                    }
+                } catch (error) {
+                    alert("오류가 발생했습니다: " + error.message);
                 }
-                reader.readAsDataURL(file);
-            } else {
-                view.innerHTML = `[ 이미지 로드 완료 ]`;
             }
-
-            setTimeout(() => {
-                let matchedMachine = machineDatabase[0];
-                if (file) {
-                    const fname = file.name.toLowerCase();
-                    if (fname.includes('lat') || fname.includes('pull')) matchedMachine = machineDatabase[1];
-                    else if (fname.includes('stair')) matchedMachine = machineDatabase[2];
-                    else if (fname.includes('smith')) matchedMachine = machineDatabase[3];
-                    else if (fname.includes('press')) matchedMachine = machineDatabase[4];
-                }
-
-                document.getElementById('machine-info-card').style.display = 'block';
-                document.getElementById('mi-name').innerText = `🔍 AI 분석 결과: ${matchedMachine.name}`;
-                document.getElementById('mi-usage').innerText = matchedMachine.usage;
-                document.getElementById('mi-caution').innerText = matchedMachine.caution;
-            }, 600);
+            reader.readAsDataURL(file);
         }
 
         function resetScanner() {
             const view = document.getElementById('scanner-view');
-            view.innerHTML = `[ 기구 사진을 업로드하면 정확하게 분석합니다 ]`;
+            view.innerHTML = `<div id="scanner-text">📷 운동기구 사진을 촬영하거나 업로드하세요</div><div class="ai-scanning-line" id="scan-line"></div>`;
             document.getElementById('machine-info-card').style.display = 'none';
             document.getElementById('machine-img-input').value = '';
         }
 
-        // 💡 [업데이트 완료] 부위별 운동 도감 각 5개씩 구성
         const fullPediaData = {
             "등": [
                 { name: "1. 랫 풀다운", target: "광배근, 대원근", usage: "상체를 살짝 뒤로 젖히고 쇄골 쪽으로 바를 당김", caution: "반동을 이용해 과도하게 당기지 않기" },
@@ -537,10 +531,10 @@
                 labels.push(`${d}일`);
                 const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 if(dbRecords[dateKey]) {
-                    weightData.push(dbRecords[dateKey].weight ? parseFloat(dbRecords[dateKey].weight) : null);
-                    muscleData.push(dbRecords[dateKey].muscle ? parseFloat(dbRecords[dateKey].muscle) : null);
-                    fatData.push(dbRecords[dateKey].fat ? parseFloat(dbRecords[dateKey].fat) : null);
-                    heightData.push(dbRecords[dateKey].height ? parseFloat(dbRecords[dateKey].height) : null);
+                    weightData.push(dbRecords[dateKey].weight || null);
+                    muscleData.push(dbRecords[dateKey].muscle || null);
+                    fatData.push(dbRecords[dateKey].fat || null);
+                    heightData.push(dbRecords[dateKey].height || null);
                 } else {
                     weightData.push(null);
                     muscleData.push(null);
@@ -549,52 +543,47 @@
                 }
             }
 
-            const commonOptions = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { labels: { font: { size: 11 } } } }
-            };
+            if(chartInstance1) chartInstance1.destroy();
+            if(chartInstance2) chartInstance2.destroy();
+            if(chartInstance3) chartInstance3.destroy();
 
             const ctx1 = document.getElementById('progressChart1').getContext('2d');
-            if(chartInstance1) chartInstance1.destroy();
             chartInstance1 = new Chart(ctx1, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: '몸무게 (kg)', data: weightData, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.2 },
-                        { label: '근육량 (kg)', data: muscleData, borderColor: '#9333ea', backgroundColor: 'rgba(147,51,234,0.1)', tension: 0.2 }
+                        { label: '몸무게 (kg)', data: weightData, borderColor: '#2563eb', tension: 0.1 },
+                        { label: '근육량 (kg)', data: muscleData, borderColor: '#16a34a', tension: 0.1 }
                     ]
                 },
-                options: { ...commonOptions, scales: { y: { type: 'linear', position: 'left', min: 20, max: 150 } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             const ctx2 = document.getElementById('progressChart2').getContext('2d');
-            if(chartInstance2) chartInstance2.destroy();
             chartInstance2 = new Chart(ctx2, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ label: '체지방률 (%)', data: fatData, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.2 }]
+                    datasets: [{ label: '체지방률 (%)', data: fatData, borderColor: '#dc2626', tension: 0.1 }]
                 },
-                options: { ...commonOptions, scales: { y: { type: 'linear', position: 'left', min: 0, max: 60 } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             const ctx3 = document.getElementById('progressChart3').getContext('2d');
-            if(chartInstance3) chartInstance3.destroy();
             chartInstance3 = new Chart(ctx3, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{ label: '키 (cm)', data: heightData, borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,0.1)', tension: 0.2 }]
+                    datasets: [{ label: '키 (cm)', data: heightData, borderColor: '#9333ea', tension: 0.1 }]
                 },
-                options: { ...commonOptions, scales: { y: { type: 'linear', position: 'left', min: 100, max: 220 } } }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         }
 
         window.onload = function() {
-            renderPediaList();
             initCalendarSettings();
+            renderPediaList();
         };
     </script>
 </body>
