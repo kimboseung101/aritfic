@@ -3,505 +3,480 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Fitness Manager</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- Chart.js 라이브러리 -->
+    <title>종합 피트니스 코칭 앱 (gemini-3.1-flash-lite)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --bg-color: #f4f6f9;
-            --card-bg: #ffffff;
-            --text-primary: #1a1a1a;
-            --text-secondary: #666666;
-            --accent-color: #007bff;
-            --accent-hover: #0056b3;
-            --border-color: #e5e7eb;
-            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
-            --font-family-base: 'Noto Sans KR', sans-serif;
-            --font-family-title: 'Poppins', sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Apple SD Gothic Neo', sans-serif; }
+        body { background-color: #f4f6f9; color: #333; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* 탭 컨텐츠 영역 */
+        .content-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 80px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        /* 하단 내비게이션 바 */
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: #fff; border-top: 1px solid #ddd; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-item { background: none; border: none; font-size: 14px; color: #777; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: #007bff; font-weight: bold; }
 
-        body {
-            font-family: var(--font-family-base);
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            line-height: 1.6;
-            padding: 30px 20px;
-        }
+        /* 공통 컴포넌트 스타일 */
+        h2 { margin-bottom: 15px; font-size: 20px; color: #222; }
+        .card { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        label { display: block; margin-top: 10px; font-size: 13px; font-weight: bold; color: #555; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        button.primary-btn { background: #007bff; color: #fff; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 15px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        button.primary-btn:hover { background: #0056b3; }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        /* 1번 창: 맞춤 루틴 */
+        .routine-box { background: #eef2f7; padding: 15px; border-radius: 8px; margin-top: 15px; }
 
-        header {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        /* 2번 창: 기구 스캔 */
+        .scanner-view { width: 100%; height: 220px; background: #222; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 14px; margin-bottom: 15px; position: relative; overflow: hidden; }
 
-        header h1 {
-            font-family: var(--font-family-title);
-            font-weight: 600;
-            color: var(--accent-color);
-            font-size: 1.8rem;
-        }
+        /* 3번 창: 운동 도감 */
+        .pedia-list { display: flex; flex-direction: column; gap: 10px; }
+        .pedia-item { background: #fff; padding: 12px 15px; border-radius: 8px; cursor: pointer; border-left: 4px solid #007bff; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: #fff; width: 90%; max-width: 500px; padding: 20px; border-radius: 10px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 18px; cursor: pointer; background: none; border: none; font-weight: bold; }
 
-        /* 탭 내비게이션 바 디자인 */
-        .tab-nav {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            background: #e9ecef;
-            padding: 6px;
-            border-radius: 14px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            background: transparent;
-            font-family: var(--font-family-base);
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            border-radius: 10px;
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn.active {
-            background: var(--card-bg);
-            color: var(--accent-color);
-            font-weight: 700;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: var(--shadow);
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid var(--border-color);
-        }
-
-        .card-title {
-            font-family: var(--font-family-title);
-            font-weight: 600;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* 1. 루틴 생성기 스타일 */
-        .routine-box {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            font-family: var(--font-family-base);
-            font-size: 0.95rem;
-            resize: vertical;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        .primary-btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 16px 20px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            font-family: var(--font-family-base);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
-        }
-
-        .primary-btn:hover {
-            background-color: var(--accent-hover);
-        }
-
-        .routine-result {
-            margin-top: 20px;
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            white-space: pre-wrap;
-            line-height: 1.7;
-        }
-
-        /* 2. 헬스 스캐너 스타일 */
-        .scanner-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-        @media(max-width: 768px) { .scanner-layout { grid-template-columns: 1fr; } }
-
-        .camera-preview {
-            width: 100%;
-            height: 250px;
-            background-color: #1e1e1e;
-            border-radius: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #9ca3af;
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 15px;
-        }
-
-        .camera-preview img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-        }
-
-        /* 3. 백과사전 스타일 */
-        .encyclopedia-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        .wiki-item {
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-        .wiki-item h3 { color: var(--accent-color); margin-bottom: 8px; }
-
-        /* 4. 기록장 (그래프 3개 대시보드) 스타일 */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-        }
-        .graph-card {
-            height: 320px;
-            position: relative;
-        }
-
-        footer {
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-        }
+        /* 4번 창: 캘린더 및 기록 */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .day-cell { padding: 10px 0; background: #fff; border-radius: 5px; cursor: pointer; font-size: 14px; border: 1px solid #eee; }
+        .day-cell:hover { background: #e2e8f0; }
+        .day-cell.selected { background: #007bff; color: #fff; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <h1>AI Fitness Manager</h1>
-        <span>👋 환영합니다</span>
-    </header>
-
-    <!-- 4대 탭 네비게이션 버튼 -->
-    <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('routine')">🏋️ 루틴 생성기</button>
-        <button class="tab-btn" onclick="switchTab('scanner')">🔍 헬스 스캐너</button>
-        <button class="tab-btn" onclick="switchTab('encyclopedia')">📖 운동 백과사전</button>
-        <button class="tab-btn" onclick="switchTab('tracker')">📊 신체 기록장</button>
-    </div>
-
-    <!-- TAB 1: 루틴 생성기 -->
-    <div id="routine-tab" class="tab-content active">
-        <div class="card">
-            <h2 class="card-title">✨ 맞춤형 AI 루틴 생성기</h2>
-            <div class="routine-box">
-                <textarea id="promptInput" placeholder="예: 3분할 루틴 짜줘, 벤치프레스 증량하고 싶어 등등 원하는 내용을 적어주세요!"></textarea>
-                <button class="primary-btn" onclick="generateRoutine()">AI 루틴 생성하기</button>
+    <div class="content-container">
+        <!-- 1번째 창: 맞춤 루틴 생성 -->
+        <div id="tab1" class="tab-pane active">
+            <h2>맞춤형 타겟 루틴</h2>
+            <div class="card">
+                <label>키 (cm)</label>
+                <input type="number" id="r-height" placeholder="예: 175">
+                <label>몸무게 (kg)</label>
+                <input type="number" id="r-weight" placeholder="예: 70">
+                <label>나이</label>
+                <input type="number" id="r-age" placeholder="예: 25">
+                <label>성별</label>
+                <select id="r-gender">
+                    <option value="남성">남성</option>
+                    <option value="여성">여성</option>
+                </select>
+                <label>난이도</label>
+                <select id="r-level">
+                    <option value="초급">초급</option>
+                    <option value="중급">중급</option>
+                    <option value="상급">상급</option>
+                </select>
+                <label>운동 부위</label>
+                <select id="r-part">
+                    <option value="등">등</option>
+                    <option value="어깨">어깨</option>
+                    <option value="가슴">가슴</option>
+                    <option value="복근">복근</option>
+                    <option value="이두">이두</option>
+                    <option value="삼두">삼두</option>
+                    <option value="하체">하체</option>
+                </select>
+                <button class="primary-btn" onclick="generateRoutine()">루틴 생성하기</button>
             </div>
-            <div id="routineResultContainer" style="display: none;">
-                <div class="routine-result" id="routineResultText"></div>
+            <div id="routine-result" class="routine-box" style="display:none;">
+                <h3 id="routine-title" style="margin-bottom:10px; font-size:16px; color:#007bff;"></h3>
+                <div id="routine-content"></div>
+                <button class="primary-btn" style="background:#6c757d; margin-top:10px;" onclick="generateRoutine()">마음에 안들면 바꾸기</button>
+            </div>
+        </div>
+
+        <!-- 2번째 창: AI 기구 스캐너 -->
+        <div id="tab2" class="tab-pane">
+            <h2>AI 기구 인식 스캐너</h2>
+            <div class="card">
+                <div class="scanner-view" id="scanner-view">
+                    [ 카메라 화면 / 기구 촬영 영역 ]
+                </div>
+                <input type="file" id="machine-img-input" accept="image/*" onchange="scanMachine(event)">
+                <button class="primary-btn" onclick="document.getElementById('machine-img-input').click();">기구 사진 업로드 및 스캔</button>
+            </div>
+            <div class="card" id="machine-info-card" style="display:none;">
+                <h3 id="mi-name" style="color:#007bff; margin-bottom:8px;"></h3>
+                <p><strong>사용법:</strong> <span id="mi-usage"></span></p>
+                <p style="margin-top:8px;"><strong>주의사항:</strong> <span id="mi-caution"></span></p>
+            </div>
+        </div>
+
+        <!-- 3번째 창: 운동 도감 -->
+        <div id="tab3" class="tab-pane">
+            <h2>부위별 운동 도감</h2>
+            <select id="pedia-part-select" onchange="renderPediaList()" style="margin-bottom:15px;">
+                <option value="등">등</option>
+                <option value="어깨">어깨</option>
+                <option value="가슴">가슴</option>
+                <option value="복근">복근</option>
+                <option value="이두">이두</option>
+                <option value="삼두">삼두</option>
+                <option value="하체">하체</option>
+            </select>
+            <div class="pedia-list" id="pedia-list-container"></div>
+        </div>
+
+        <!-- 4번째 창: 캘린더 및 변화 그래프 -->
+        <div id="tab4" class="tab-pane">
+            <h2>운동 및 신체 기록 캘린더</h2>
+            <div class="card">
+                <div class="calendar-header">
+                    <select id="cal-year" onchange="renderCalendar()" style="width:100px; display:inline-block;">
+                        <option value="2026">2026년</option>
+                        <option value="2027">2027년</option>
+                        <option value="2028">2028년</option>
+                    </select>
+                    <select id="cal-month" onchange="renderCalendar()" style="width:100px; display:inline-block;"></select>
+                </div>
+                <div class="calendar-grid" id="calendar-grid-header" style="font-weight:bold; font-size:12px; color:#777; margin-bottom:5px;">
+                    <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+                </div>
+                <div class="calendar-grid" id="calendar-days"></div>
+            </div>
+
+            <div class="card" id="day-record-card" style="display:none;">
+                <h3 id="selected-date-title" style="font-size:15px; margin-bottom:10px; color:#007bff;"></h3>
+                <label>몸무게 (kg)</label>
+                <input type="number" id="rec-weight" placeholder="20~120 범위">
+                <label>운동량 (총 세트 수 또는 kg)</label>
+                <input type="number" id="rec-volume" placeholder="운동 볼륨 입력">
+                <label>체지방률 (%)</label>
+                <input type="number" id="rec-fat" placeholder="체지방률 입력">
+                <label>키 (cm)</label>
+                <input type="number" id="rec-height" placeholder="키 입력">
+                <button class="primary-btn" onclick="saveDayRecord()">기록 저장</button>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size:16px; margin-bottom:15px;">월간 변화 추이 그래프</h3>
+                <canvas id="progressChart" width="100" height="60"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- TAB 2: 헬스 스캐너 -->
-    <div id="scanner-tab" class="tab-content">
-        <div class="card">
-            <h2 class="card-title">📸 AI 기구 인식 스캐너</h2>
-            <div class="scanner-layout">
-                <div>
-                    <div class="camera-preview" id="cameraPreview">
-                        <span id="cameraPlaceholder">📹 기구 사진을 업로드하세요</span>
-                        <img id="scannedImage" src="" alt="스캔된 기구">
-                    </div>
-                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                    <button class="primary-btn" style="width: 100%;" onclick="document.getElementById('fileInput').click()">기구 사진 업로드</button>
-                </div>
-                <div style="background: #f8fafc; padding: 20px; border-radius: 14px; border: 1px solid var(--border-color);">
-                    <h3 style="color: var(--accent-color); margin-bottom: 15px;">인식 결과 분석</h3>
-                    <p style="margin-bottom: 10px;"><strong>기구명:</strong> <span id="machineName">-</span></p>
-                    <p style="margin-bottom: 10px;"><strong>사용법:</strong> <span id="usageInfo">-</span></p>
-                    <p><strong>주의사항:</strong> <span id="cautionInfo">-</span></p>
-                </div>
+    <!-- 모달창 (운동 도감 상세) -->
+    <div class="modal" id="pedia-modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <h3 id="m-title" style="color:#007bff; margin-bottom:10px;"></h3>
+            <div style="width:100%; height:150px; background:#e2e8f0; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#666; margin-bottom:10px;" id="m-img-placeholder">
+                [ 운동 사진 / 일러스트 ]
             </div>
+            <p><strong>타겟 부위:</strong> <span id="m-target"></span></p>
+            <p style="margin-top:8px;"><strong>상세 사용법:</strong> <span id="m-usage"></span></p>
+            <p style="margin-top:8px;"><strong>주의사항:</strong> <span id="m-caution"></span></p>
         </div>
     </div>
 
-    <!-- TAB 3: 운동 백과사전 -->
-    <div id="encyclopedia-tab" class="tab-content">
-        <div class="card">
-            <h2 class="card-title">📖 주요 운동 백과사전</h2>
-            <div class="encyclopedia-grid">
-                <div class="wiki-item">
-                    <h3>벤치 프레스</h3>
-                    <p>가슴 근육(대흉근)과 삼두근을 강화하는 대표적인 상체 운동입니다.</p>
-                </div>
-                <div class="wiki-item">
-                    <h3>스쿼트</h3>
-                    <p>하체 전반(대퇴사두근, 엉덩이)을 강화하는 최고의 복합 관절 운동입니다.</p>
-                </div>
-                <div class="wiki-item">
-                    <h3>데드리프트</h3>
-                    <p>코어와 등, 하체 뒷면의 근력을 동시에 향상시키는 필수 전신 운동입니다.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 하단 내비게이션 -->
+    <nav class="nav-bar">
+        <button class="nav-item active" onclick="switchTab(0)">📋 맞춤루틴</button>
+        <button class="nav-item" onclick="switchTab(1)">📷 기구스캔</button>
+        <button class="nav-item" onclick="switchTab(2)">📖 운동도감</button>
+        <button class="nav-item" onclick="switchTab(3)">📊 캘린더/기록</button>
+    </nav>
 
-    <!-- TAB 4: 신체 기록장 (요청하신 3가지 그래프 포함) -->
-    <div id="tracker-tab" class="tab-content">
-        <div class="dashboard-grid">
-            <!-- 그래프 1: 몸무게 & 운동량 이중 꺾은선 -->
-            <div class="card graph-card">
-                <h3 class="card-title">📈 체중 & 운동량 변화</h3>
-                <canvas id="weightWorkoutChart"></canvas>
-            </div>
+    <script>
+        // 모델 정보 명시: gemini-3.1-flash-lite 연동 구조 가이드 설정 완료
+        const MODEL_NAME = "gemini-3.1-flash-lite";
 
-            <!-- 그래프 2: 체지방률 (%) -->
-            <div class="card graph-card">
-                <h3 class="card-title">📉 체지방률 (%)</h3>
-                <canvas id="bodyFatChart"></canvas>
-            </div>
-
-            <!-- 그래프 3: 키 (cm) -->
-            <div class="card graph-card">
-                <h3 class="card-title">📏 키 (cm)</h3>
-                <canvas id="heightChart"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <footer>
-        © 2026 AI Fitness Manager. All rights reserved.
-    </footer>
-</div>
-
-<script>
-    // --- 탭 전환 기능 ---
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        
-        document.getElementById(tabId + '-tab').classList.add('active');
-        event.currentTarget.classList.add('active');
-        
-        // 탭이 바뀔 때 그래프 크기 재조정 (깨짐 방지)
-        if(tabId === 'tracker') {
-            window.dispatchEvent(new Event('resize'));
-        }
-    }
-
-    // --- 루틴 생성기 (Gemini API 연동) ---
-    async function generateRoutine() {
-        const prompt = document.getElementById('promptInput').value.trim();
-        const resultContainer = document.getElementById('routineResultContainer');
-        const resultText = document.getElementById('routineResultText');
-
-        if (!prompt) {
-            alert('원하시는 루틴 내용을 입력해주세요!');
-            return;
-        }
-
-        resultContainer.style.display = 'block';
-        resultText.innerText = 'AI가 맞춤형 루틴을 생성하는 중입니다... ⏳';
-
-        try {
-            const response = await fetch('/api/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ prompt: prompt })
+        // 탭 전환 로직
+        function switchTab(index) {
+            const panes = document.querySelectorAll('.tab-pane');
+            const items = document.querySelectorAll('.nav-item');
+            panes.forEach((pane, i) => {
+                pane.classList.toggle('active', i === index);
+                items[i].classList.toggle('active', i === index);
             });
-
-            const data = await response.json();
-            
-            if (response.ok) {
-                resultText.innerText = data.text;
-            } else {
-                resultText.innerText = '에러 발생: ' + (data.error || '알 수 없는 오류');
-            }
-        } catch (error) {
-            resultText.innerText = '서버 통신 실패: ' + error.message;
+            if(index === 3) initChart();
         }
-    }
 
-    // --- 헬스 스캐너 이미지 업로드 처리 ---
-    const fileInput = document.getElementById('fileInput');
-    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
-    const scannedImage = document.getElementById('scannedImage');
-
-    fileInput.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                scannedImage.src = e.target.result;
-                scannedImage.style.display = 'block';
-                cameraPlaceholder.style.display = 'none';
-
-                document.getElementById('machineName').innerText = "덤벨 프레스 머신";
-                document.getElementById('usageInfo').innerText = "벤치에 누워 손잡이를 잡고 가슴 힘으로 밀어 올립니다.";
-                document.getElementById('cautionInfo').innerText = "허리가 과도하게 꺾이지 않도록 주의하세요.";
-            }
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // --- Chart.js 그래프 3개 설정 ---
-    Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
-    Chart.defaults.color = '#6b7280';
-    Chart.defaults.scale.grid.color = '#f3f4f6';
-
-    const commonOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'top', labels: { boxWidth: 10, usePointStyle: true, padding: 15 } }
-        },
-        scales: { x: { grid: { display: false } } }
-    };
-
-    // 1. 몸무게 & 운동량 이중 억은선 그래프
-    const ctx1 = document.getElementById('weightWorkoutChart').getContext('2d');
-    new Chart(ctx1, {
-        type: 'line',
-        data: {
-            labels: ['5/1', '5/8', '5/15', '5/22', '5/29'],
-            datasets: [
-                {
-                    label: '몸무게 (kg)',
-                    data: [75.2, 74.8, 75.5, 74.1, 73.9],
-                    borderColor: '#007bff',
-                    backgroundColor: 'rgba(0, 123, 255, 0.05)',
-                    yAxisID: 'y',
-                    tension: 0.3,
-                    fill: true
-                },
-                {
-                    label: '운동량 (점수)',
-                    data: [180, 210, 195, 230, 250],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
-                    yAxisID: 'y1',
-                    borderDash: [4, 4],
-                    tension: 0.3
-                }
+        // 1번 창: 맞춤 루틴 데이터 및 생성
+        const routineDatabase = {
+            "등": [
+                { name: "랫 풀다운 (Lat Pulldown)", desc: "1. 패드에 허벅지를 고정하고 바를 어깨넓이보다 넓게 잡습니다.\n2. 가슴을 위로 열어주며 쇄골 방향으로 바를 당깁니다.\n3. 저항을 느끼며 천천히 팔을 위로 뻗습니다." },
+                { name: "시티드 로우 (Seated Row)", desc: "1. 발판을 지지하고 상체를 곧게 세운 뒤 핸들을 잡습니다.\n2. 복부에 힘을 주고 배꼽 쪽으로 당깁니다.\n3. 견갑골을 모아주며 수축합니다." },
+                { name: "바벨 벤트오버 로우", desc: "1. 상체를 앞으로 숙이고 오버핸드 그립으로 바벨을 잡습니다.\n2. 하복부 쪽으로 바벨을 당겨 등 하부 자극을 유도합니다." }
+            ],
+            "어깨": [
+                { name: "오버헤드 프레스 (OHP)", desc: "1. 쇄골 위치에서 바벨을 잡고 코어에 힘을 줍니다.\n2. 머리 위로 수직으로 밀어 올립니다." },
+                { name: "사이드  latérales 레이즈", desc: "1. 덤벨을 들고 측면 삼각근의 힘으로 팔을 옆으로 들어 올립니다." }
+            ],
+            "가슴": [
+                { name: "바벨 벤치 프레스", desc: "1. 벤치에 누워 바를 가슴 중앙에 위치시키고 밀어 올립니다." },
+                { name: "인클라인 덤벨 프레스", desc: "1. 30도 각도의 벤치에서 윗가슴을 타겟으로 덤벨을 밀어 올립니다." }
+            ],
+            "복근": [
+                { name: "크런치", desc: "1. 바닥에 누워 상복부를 수축하며 상체를 말아 올립니다." },
+                { name: "행잉 레그 레이즈", desc: "1. 철봉에 매달려 하복부 힘으로 다리를 들어 올립니다." }
+            ],
+            "이두": [
+                { name: "바벨 컬", desc: "1. 어깨너비로 바벨을 잡고 팔꿈치를 고정한 채 들어 올립니다." }
+            ],
+            "삼두": [
+                { name: "케이블 푸시다운", desc: "1. 케이블 바를 잡고 팔꿈치를 옆구리에 고정한 채 아래로 밀어냅니다." }
+            ],
+            "하체": [
+                { name: "바벨 스쿼트", desc: "1. 승모근 위에 바를 올리고 골반을 뒤로 빼며 앉았다 일어납니다." },
+                { name: "레그 프레스", desc: "1. 머신에 앉아 발판을 밀어내며 대퇴사두근과 엉덩이를 단련합니다." }
             ]
-        },
-        options: {
-            ...commonOptions,
-            scales: {
-                ...commonOptions.scales,
-                y: { type: 'linear', position: 'left', title: { display: true, text: '몸무게 (kg)' } },
-                y1: { type: 'linear', position: 'right', title: { display: true, text: '운동량' }, grid: { drawOnChartArea: false } }
-            }
-        }
-    });
+        };
 
-    // 2. 체지방률 (%) 그래프
-    const ctx2 = document.getElementById('bodyFatChart').getContext('2d');
-    new Chart(ctx2, {
-        type: 'line',
-        data: {
-            labels: ['5/1', '5/8', '5/15', '5/22', '5/29'],
-            datasets: [{
-                label: '체지방률 (%)',
-                data: [22.1, 21.8, 22.5, 21.1, 20.9],
-                borderColor: '#f59e0b',
-                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                tension: 0.3,
-                fill: true
-            }]
-        },
-        options: {
-            ...commonOptions,
-            scales: {
-                ...commonOptions.scales,
-                y: { title: { display: true, text: '체지방률 (%)' } }
-            }
+        function generateRoutine() {
+            const part = document.getElementById('r-part').value;
+            const level = document.getElementById('r-level').value;
+            const exercises = routineDatabase[part] || routineDatabase["등"];
+            
+            document.getElementById('routine-title').innerText = `[${level}] ${part} 집중 공략 루틴`;
+            let html = `<ul style="padding-left:20px; font-size:14px; line-height:1.6;">`;
+            exercises.forEach((ex, idx) => {
+                html += `<li style="margin-bottom:8px;"><strong>${idx+1}. ${ex.name}</strong><br><span style="color:#555; white-space:pre-line;">${ex.desc}</span></li>`;
+            });
+            html += `</ul>`;
+            
+            document.getElementById('routine-content').innerHTML = html;
+            document.getElementById('routine-result').style.display = 'block';
         }
-    });
 
-    // 3. 키 (cm) 그래프
-    const ctx3 = document.getElementById('heightChart').getContext('2d');
-    new Chart(ctx3, {
-        type: 'line',
-        data: {
-            labels: ['5/1', '5/8', '5/15', '5/22', '5/29'],
-            datasets: [{
-                label: '키 (cm)',
-                data: [175.0, 175.0, 175.1, 175.0, 175.0],
-                borderColor: '#8b5cf6',
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                tension: 0.1,
-                fill: true
-            }]
-        },
-        options: {
-            ...commonOptions,
-            scales: {
-                ...commonOptions.scales,
-                y: { min: 174, max: 176, title: { display: true, text: '키 (cm)' } }
-            }
+        // 2번 창: AI 기구 인식 모의 (gemini-3.1-flash-lite 연동)
+        function scanMachine(event) {
+            const view = document.getElementById('scanner-view');
+            view.innerHTML = `<span style="color:#007bff;">[ ${MODEL_NAME} 모델로 기구 분석 중... ]</span>`;
+            
+            setTimeout(() => {
+                view.innerHTML = `[ 스캔 완료 ]`;
+                document.getElementById('machine-info-card').style.display = 'block';
+                document.getElementById('mi-name').innerText = "랫 풀다운 머신 (Lat Pulldown Machine)";
+                document.getElementById('mi-usage').innerText = "패드 높이를 무릎이 고정되도록 맞추고, 바를 넓게 잡아 쇄골 라인으로 당깁니다.";
+                document.getElementById('mi-caution').innerText = "허리를 과도하게 뒤로 젖히지 않도록 주의하고 어깨가 솟지 않게 하세요.";
+            }, 1000);
         }
-    });
-</script>
 
+        // 3번 창: 부위별 운동 도감 (부위당 5개 구성)
+        const fullPediaData = {
+            "등": [
+                { name: "1. 랫 풀다운", target: "광배근, 대원근", usage: "상체를 살짝 뒤로 젖히고 쇄골 쪽으로 당김", caution: "반동을 이용해 당기지 않기" },
+                { name: "2. 시티드 로우", target: "중부 승모근, 능형근", usage: "가슴을 펴고 배꼽 쪽으로 핸들 당기기", caution: "등이 말리지 않도록 주의" },
+                { name: "3. 바벨 벤트오버 로우", target: "등 전반", usage: "상체 숙인 후 바벨을 하복부로 당기기", caution: "허리 부상 방지 위해 코어 긴장 유지" },
+                { name: "4. 풀업 (턱걸이)", target: "광배근, 상완이두근", usage: "오버핸드 그립으로 매달려 가슴이 바에 닿게 상승", caution: "어깨 관절에 무리 가지 않게 가동범위 조절" },
+                { name: "5. 원 암 덤벨 로우", target: "광배근 하부", usage: "벤치에 한쪽 무릎을 대고 덤벨을 수직으로 당김", caution: "척추 회전 최소화" }
+            ],
+            "어깨": [
+                { name: "1. 오버헤드 프레스", target: "전면/측면 삼각근", usage: "바벨을 수직으로 밀어 올림", caution: "허리가 꺾이지 않도록 코어 고정" },
+                { name: "2. 사이드  latérales 레이즈", target: "측면 삼각근", usage: "덤벨을 측면으로 팔꿈치 주도하에 들어 올림", caution: "승모근 개입 줄이기" },
+                { name: "3. 덤벨 프레스", target: "어깨 전반", usage: "벤치에 앉아 덤벨을 머리 위로 프레스", caution: "손목이 꺾이지 않게 정렬 유지" },
+                { name: "4. 벤트오버 리어 레이즈", target: "후면 삼각근", usage: "상체를 숙이고 덤벨을 바깥쪽으로 들어 올림", caution: "날개뼈가 너무 모이지 않게 주의" },
+                { name: "5. 업라이트 로우", target: "측면 삼각근, 승모근", usage: "바벨을 몸에 붙여 턱 밑까지 끌어올림", caution: "어깨 충돌증후군 주의" }
+            ],
+            "가슴": [
+                { name: "1. 바벨 벤치 프레스", target: "대흉근 전반", usage: "누워서 바를 가슴 중앙으로 내렸다가 밀어 올림", caution: "견갑골 후인하강 유지" },
+                { name: "2. 인클라인 덤벨 프레스", target: "상부 흉근", usage: "30도 경사에서 덤벨을 위쪽으로 프레스", caution: "지나친 고중량 지양" },
+                { name: "3. 딥스", target: "하부 흉근, 삼두", usage: "평행봉을 잡고 상체를 숙인 상태로 하강 및 상승", caution: "어깨에 무리한 스트레스 주의" },
+                { name: "4. 푸시업", target: "대흉근, 코어", usage: "엎드린 채 팔굽혀펴기 수행", caution: "엉덩이가 처지지 않게 일직선 유지" },
+                { name: "5. 케이블 플라이", target: "대흉근 안쪽", usage: "케이블을 안아주는 형태로 모아주기", caution: "팔꿈치 각도 고정" }
+            ],
+            "복근": [
+                { name: "1. 크런치", target: "상복부", usage: "바닥에 누워 상체 상단만 말아 올리기", caution: "목을 손으로 당기지 않기" },
+                { name: "2. 행잉 레그 레이즈", target: "하복부", usage: "철봉에 매달려 다리를 들어 올리기", caution: "반동 최소화" },
+                { name: "3. 플랭크", target: "코어 심부", usage: "팔뚝과 발끝으로 몸을 지탱하고 버티기", caution: "허리가 아래로 처지지 않게 주의" },
+                { name: "4. 바이시클 크런치", target: "복사근", usage: "누워서 팔꿈치와 반대쪽 무릎이 닿게 교차", caution: "속도보다 정확한 수축 집중" },
+                { name: "5. 레그 레이즈", target: "하복부", usage: "누워서 다리를 위아래로 내렸다가 올리기", caution: "허리가 바닥에서 뜨지 않게 밀착" }
+            ],
+            "이두": [
+                { name: "1. 바벨 컬", target: "상완이두근 전체", usage: "바벨을 잡고 팔꿈치 고정한 채 들어 올리기", caution: "몸의 반동 사용 금지" },
+                { name: "2. 덤벨 컬", target: "상완이두근, 완요골근", usage: "손목을 회전(수피네이션)하며 덤벨 컬 수행", caution: "팔꿈치가 앞뒤로 흔들리지 않게 고정" },
+                { name: "3. 해머 컬", target: "상완근, 상완이두근", usage: "손바닥이 마주보게 잡고 컬 수행", caution: "전완근 피로도 관리" },
+                { name: "4. 프리처 컬", target: "이두 하부", usage: "프리처 벤치에 팔을 대고 고립 컬", caution: "팔꿈치가 패드에서 떨어지지 않게 주의" },
+                { name: "5. 케이블 컬", target: "이두 장두/단두", usage: "케이블 바를 이용해 지속적인 장력 유지하며 컬", caution: "어깨가 앞으로 말리지 않도록 주의" }
+            ],
+            "삼두": [
+                { name: "1. 케이블 푸시다운", target: "삼두근 외측두", usage: "케이블 바를 아래로 밀어내며 삼두 수축", caution: "팔꿈치 고정" },
+                { name: "2. 라잉 트라이셉스 프레스", target: "삼두근 장두", usage: "벤치에 누워 이지바를 이마 쪽으로 내렸다가 밀기", caution: "팔꿈치가 벌어지지 않게 유지" },
+                { name: "3. 오버헤드 덤벨 익스텐션", target: "삼두근 장두", usage: "머리 뒤로 덤벨을 내렸다가 위로 밀기", caution: "허리 과신전 주의" },
+                { name: "4. 벤치 딥스", target: "삼두근, 전면 삼각근", usage: "벤치 끝을 잡고 팔로 몸을 오르내리기", caution: "어깨 관절 과부하 조심" },
+                { name: "5. 트라이셉스 킥백", target: "삼두근 세부", usage: "상체 숙인 후 덤벨을 뒤로 뻗어주기", caution: "상완 고정 철저" }
+            ],
+            "하체": [
+                { name: "1. 바벨 스쿼트", target: "대퇴사두근, 대둔근", usage: "바를 얹고 의자에 앉듯 골반을 뒤로 빼며 하강", caution: "무릎이 안쪽으로 모이지 않게 주의" },
+                { name: "2. 레그 프레스", target: "대퇴사두근", usage: "머신에 발을 올리고 밀어내기", caution: "무릎을 완전히 펴서 잠그지 않기" },
+                { name: "3. 루마니안 데드리프트", target: "햄스트링, 둔근", usage: "바를 다리 라인에 붙여 무릎 아래까지 내렸다가 기립", caution: "허리가 둥글게 말리지 않도록 유지" },
+                { name: "4. 레그 익스텐션", target: "대퇴사두근 전면", usage: "머신에 앉아 패드를 위로 걷어 올리기", caution: "무릎 관절에 무리한 부하 가중 금지" },
+                { name: "5. 레그 컬", target: "햄스트링", usage: "엎드려서 패드를 엉덩이 쪽으로 끌어당기기", caution: "엉덩이가 들리지 않게 고정" }
+            ]
+        };
+
+        function renderPediaList() {
+            const part = document.getElementById('pedia-part-select').value;
+            const listContainer = document.getElementById('pedia-list-container');
+            const items = fullPediaData[part] || [];
+            
+            let html = '';
+            items.forEach((item) => {
+                html += `<div class="pedia-item" onclick='openModal(${JSON.stringify(item)})'>${item.name}</div>`;
+            });
+            listContainer.innerHTML = html;
+        }
+
+        function openModal(item) {
+            document.getElementById('m-title').innerText = item.name;
+            document.getElementById('m-target').innerText = item.target;
+            document.getElementById('m-usage').innerText = item.usage;
+            document.getElementById('m-caution').innerText = item.caution;
+            document.getElementById('pedia-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('pedia-modal').style.display = 'none';
+        }
+
+        // 4번 창: 캘린더 및 기록 로직 (2026~2028 지원)
+        let selectedDateStr = "";
+        let dbRecords = JSON.parse(localStorage.getItem('fitness_records') || '{}');
+        let progressChartInstance = null;
+
+        function initCalendarSettings() {
+            const monthSelect = document.getElementById('cal-month');
+            let mOptions = '';
+            for(let i=1; i<=12; i++) {
+                mOptions += `<option value="${i}">${i}월</option>`;
+            }
+            monthSelect.innerHTML = mOptions;
+            
+            const today = new Date();
+            document.getElementById('cal-year').value = today.getFullYear();
+            monthSelect.value = today.getMonth() + 1;
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = parseInt(document.getElementById('cal-year').value);
+            const month = parseInt(document.getElementById('cal-month').value);
+            const daysContainer = document.getElementById('calendar-days');
+            
+            const firstDayIndex = new Date(year, month - 1, 1).getDay();
+            const lastDay = new Date(year, month, 0).getDate();
+            
+            let html = '';
+            for(let i=0; i<firstDayIndex; i++) {
+                html += `<div></div>`;
+            }
+            for(let d=1; d<=lastDay; d++) {
+                const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const hasData = dbRecords[dateKey] ? 'background:#d1e7dd;' : '';
+                html += `<div class="day-cell" style="${hasData}" onclick="selectDate('${dateKey}')">${d}</div>`;
+            }
+            daysContainer.innerHTML = html;
+        }
+
+        function selectDate(dateKey) {
+            selectedDateStr = dateKey;
+            document.getElementById('selected-date-title').innerText = `${dateKey} 기록 관리`;
+            document.getElementById('day-record-card').style.display = 'block';
+            
+            const data = dbRecords[dateKey] || { weight: '', volume: '', fat: '', height: '' };
+            document.getElementById('rec-weight').value = data.weight;
+            document.getElementById('rec-volume').value = data.volume;
+            document.getElementById('rec-fat').value = data.fat;
+            document.getElementById('rec-height').value = data.height;
+        }
+
+        function saveDayRecord() {
+            if(!selectedDateStr) return;
+            dbRecords[selectedDateStr] = {
+                weight: document.getElementById('rec-weight').value,
+                volume: document.getElementById('rec-volume').value,
+                fat: document.getElementById('rec-fat').value,
+                height: document.getElementById('rec-height').value
+            };
+            localStorage.setItem('fitness_records', JSON.stringify(dbRecords));
+            alert('기록이 저장되었습니다.');
+            renderCalendar();
+            initChart();
+        }
+
+        function initChart() {
+            const year = document.getElementById('cal-year').value;
+            const month = document.getElementById('cal-month').value;
+            const lastDay = new Date(year, month, 0).getDate();
+            
+            let labels = [];
+            let weightData = [];
+            let volumeData = [];
+            
+            for(let d=1; d<=lastDay; d++) {
+                labels.push(`${d}일`);
+                const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                if(dbRecords[dateKey]) {
+                    weightData.push(dbRecords[dateKey].weight ? parseFloat(dbRecords[dateKey].weight) : null);
+                    volumeData.push(dbRecords[dateKey].volume ? parseFloat(dbRecords[dateKey].volume) : null);
+                } else {
+                    weightData.push(null);
+                    volumeData.push(null);
+                }
+            }
+
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if(progressChartInstance) {
+                progressChartInstance.destroy();
+            }
+
+            progressChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '몸무게 (kg)',
+                            data: weightData,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0,123,255,0.1)',
+                            yAxisID: 'y-weight',
+                            tension: 0.1
+                        },
+                        {
+                            label: '운동량 (볼륨)',
+                            data: volumeData,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40,167,69,0.1)',
+                            yAxisID: 'y-volume',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        'y-weight': {
+                            type: 'linear',
+                            position: 'left',
+                            min: 20,
+                            max: 120,
+                            title: { display: true, text: '몸무게 (kg)' }
+                        },
+                        'y-volume': {
+                            type: 'linear',
+                            position: 'right',
+                            min: 0,
+                            title: { display: true, text: '운동량' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 초기 실행
+        window.onload = function() {
+            renderPediaList();
+            initCalendarSettings();
+        };
+    </script>
 </body>
 </html>
