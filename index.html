@@ -105,7 +105,6 @@
                 <h3 id="mi-name" style="color:#007bff; margin-bottom:8px;"></h3>
                 <p><strong>사용법:</strong> <span id="mi-usage"></span></p>
                 <p style="margin-top:8px;"><strong>주의사항:</strong> <span id="mi-caution"></span></p>
-                <!-- 새로 추가된 다시 스캔하기 버튼 -->
                 <button class="primary-btn" style="background:#6c757d; margin-top:15px;" onclick="resetScanner()">다시 스캔하기</button>
             </div>
         </div>
@@ -130,12 +129,12 @@
             <h2>운동 및 신체 기록 캘린더</h2>
             <div class="card">
                 <div class="calendar-header">
-                    <select id="cal-year" onchange="renderCalendar()" style="width:100px; display:inline-block;">
+                    <select id="cal-year" onchange="renderCalendar(); initCharts();" style="width:100px; display:inline-block;">
                         <option value="2026">2026년</option>
                         <option value="2027">2027년</option>
                         <option value="2028">2028년</option>
                     </select>
-                    <select id="cal-month" onchange="renderCalendar()" style="width:100px; display:inline-block;"></select>
+                    <select id="cal-month" onchange="renderCalendar(); initCharts();" style="width:100px; display:inline-block;"></select>
                 </div>
                 <div class="calendar-grid" id="calendar-grid-header" style="font-weight:bold; font-size:12px; color:#777; margin-bottom:5px;">
                     <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
@@ -157,8 +156,18 @@
             </div>
 
             <div class="card">
-                <h3 style="font-size:16px; margin-bottom:15px;">월간 변화 추이 그래프</h3>
-                <canvas id="progressChart" width="100" height="60"></canvas>
+                <h3 style="font-size:16px; margin-bottom:15px;">1. 몸무게 및 운동량 변화 추이</h3>
+                <canvas id="progressChart1" width="100" height="60"></canvas>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size:16px; margin-bottom:15px;">2. 체지방률 변화 추이 (%)</h3>
+                <canvas id="progressChart2" width="100" height="60"></canvas>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size:16px; margin-bottom:15px;">3. 키 변화 추이 (cm)</h3>
+                <canvas id="progressChart3" width="100" height="60"></canvas>
             </div>
         </div>
     </div>
@@ -196,37 +205,37 @@
                 pane.classList.toggle('active', i === index);
                 items[i].classList.toggle('active', i === index);
             });
-            if(index === 3) initChart();
+            if(index === 3) initCharts();
         }
 
-        // 1번 창: 맞춤 루틴 데이터 및 생성
+        // 1번 창: 맞춤 루틴 데이터 및 생성 (세트/횟수 포함)
         const routineDatabase = {
             "등": [
-                { name: "랫 풀다운 (Lat Pulldown)", desc: "1. 패드에 허벅지를 고정하고 바를 어깨넓이보다 넓게 잡습니다.\n2. 가슴을 위로 열어주며 쇄골 방향으로 바를 당깁니다.\n3. 저항을 느끼며 천천히 팔을 위로 뻗습니다." },
-                { name: "시티드 로우 (Seated Row)", desc: "1. 발판을 지지하고 상체를 곧게 세운 뒤 핸들을 잡습니다.\n2. 복부에 힘을 주고 배꼽 쪽으로 당깁니다.\n3. 견갑골을 모아주며 수축합니다." },
-                { name: "바벨 벤트오버 로우", desc: "1. 상체를 앞으로 숙이고 오버핸드 그립으로 바벨을 잡습니다.\n2. 하복부 쪽으로 바벨을 당겨 등 하부 자극을 유도합니다." }
+                { name: "랫 풀다운 (Lat Pulldown)", sets: "4세트 × 12회", desc: "패드에 허벅지를 고정하고 바를 어깨넓이보다 넓게 잡고 쇄골 방향으로 당깁니다." },
+                { name: "시티드 로우 (Seated Row)", sets: "3세트 × 12회", desc: "발판을 지지하고 상체를 곧게 세운 뒤 배꼽 쪽으로 핸들을 당깁니다." },
+                { name: "바벨 벤트오버 로우", sets: "3세트 × 10회", desc: "상체를 숙이고 오버핸드 그립으로 바벨을 하복부 쪽으로 당깁니다." }
             ],
             "어깨": [
-                { name: "오버헤드 프레스 (OHP)", desc: "1. 쇄골 위치에서 바벨을 잡고 코어에 힘을 줍니다.\n2. 머리 위로 수직으로 밀어 올립니다." },
-                { name: "사이드 레이즈", desc: "1. 덤벨을 들고 측면 삼각근의 힘으로 팔을 옆으로 들어 올립니다." }
+                { name: "오버헤드 프레스 (OHP)", sets: "4세트 × 8회", desc: "쇄골 위치에서 바벨을 잡고 머리 위로 수직으로 밀어 올립니다." },
+                { name: "사이드 레이즈", sets: "4세트 × 15회", desc: "덤벨을 들고 측면 삼각근의 힘으로 팔을 옆으로 들어 올립니다." }
             ],
             "가슴": [
-                { name: "바벨 벤치 프레스", desc: "1. 벤치에 누워 바를 가슴 중앙에 위치시키고 밀어 올립니다." },
-                { name: "인클라인 덤벨 프레스", desc: "1. 30도 각도의 벤치에서 윗가슴을 타겟으로 덤벨을 밀어 올립니다." }
+                { name: "바벨 벤치 프레스", sets: "4세트 × 10회", desc: "벤치에 누워 바를 가슴 중앙에 위치시키고 밀어 올립니다." },
+                { name: "인클라인 덤벨 프레스", sets: "3세트 × 12회", desc: "30도 각도의 벤치에서 윗가슴을 타겟으로 덤벨을 밀어 올립니다." }
             ],
             "복근": [
-                { name: "크런치", desc: "1. 바닥에 누워 상복부를 수축하며 상체를 말아 올립니다." },
-                { name: "행잉 레그 레이즈", desc: "1. 철봉에 매달려 하복부 힘으로 다리를 들어 올립니다." }
+                { name: "크런치", sets: "3세트 × 20회", desc: "바닥에 누워 상복부를 수축하며 상체를 말아 올립니다." },
+                { name: "행잉 레그 레이즈", sets: "3세트 × 12회", desc: "철봉에 매달려 하복부 힘으로 다리를 들어 올립니다." }
             ],
             "이두": [
-                { name: "바벨 컬", desc: "1. 어깨너비로 바벨을 잡고 팔꿈치를 고정한 채 들어 올립니다." }
+                { name: "바벨 컬", sets: "3세트 × 12회", desc: "어깨너비로 바벨을 잡고 팔꿈치를 고정한 채 들어 올립니다." }
             ],
             "삼두": [
-                { name: "케이블 푸시다운", desc: "1. 케이블 바를 잡고 팔꿈치를 옆구리에 고정한 채 아래로 밀어냅니다." }
+                { name: "케이블 푸시다운", sets: "3세트 × 12회", desc: "케이블 바를 잡고 팔꿈치를 옆구리에 고정한 채 아래로 밀어냅니다." }
             ],
             "하체": [
-                { name: "바벨 스쿼트", desc: "1. 승모근 위에 바를 올리고 골반을 뒤로 빼며 앉았다 일어납니다." },
-                { name: "레그 프레스", desc: "1. 머신에 앉아 발판을 밀어내며 대퇴사두근과 엉덩이를 단련합니다." }
+                { name: "바벨 스쿼트", sets: "4세트 × 8회", desc: "승모근 위에 바를 올리고 골반을 뒤로 빼며 앉았다 일어납니다." },
+                { name: "레그 프레스", sets: "4세트 × 12회", desc: "머신에 앉아 발판을 밀어내며 대퇴사두근과 엉덩이를 단련합니다." }
             ]
         };
 
@@ -238,7 +247,7 @@
             document.getElementById('routine-title').innerText = `[${level}] ${part} 집중 공략 루틴`;
             let html = `<ul style="padding-left:20px; font-size:14px; line-height:1.6;">`;
             exercises.forEach((ex, idx) => {
-                html += `<li style="margin-bottom:8px;"><strong>${idx+1}. ${ex.name}</strong><br><span style="color:#555; white-space:pre-line;">${ex.desc}</span></li>`;
+                html += `<li style="margin-bottom:8px;"><strong>${idx+1}. ${ex.name} (${ex.sets})</strong><br><span style="color:#555; white-space:pre-line;">${ex.desc}</span></li>`;
             });
             html += `</ul>`;
             
@@ -246,29 +255,36 @@
             document.getElementById('routine-result').style.display = 'block';
         }
 
-        // 2번 창: AI 기구 인식 모의 (gemini-3.1-flash-lite 연동)
+        // 2번 창: AI 기구 인식 모의 (랜덤 기구 지원)
+        const machineList = [
+            { name: "랫 풀다운 머신 (Lat Pulldown Machine)", usage: "패드 높이를 무릎이 고정되도록 맞추고, 바를 넓게 잡아 쇄골 라인으로 당깁니다.", caution: "허리를 과도하게 뒤로 젖히지 않도록 주의하고 어깨가 솟지 않게 하세요." },
+            { name: "체스트 프레스 머신 (Chest Press Machine)", usage: "손잡이 높이를 가슴 중앙에 맞추고 벤치에 등과 엉덩이를 완전히 밀착한 뒤 밀어냅니다.", caution: "손목이 뒤로 꺾이지 않게 주의하고 팔꿈치를 완전히 펴서 관절을 잠그지 마세요." },
+            { name: "레그 프레스 머신 (Leg Press Machine)", usage: "발판 중앙에 발을 어깨너비로 올리고 무릎 각도가 90도가 되도록 내린 뒤 밀어냅니다.", caution: "무릎이 안쪽으로 모이지 않도록 주의하고 허리가 발판 쪽에서 뜨지 않게 하세요." },
+            { name: "시티드 로우 머신 (Seated Row Machine)", usage: "가슴 패드에 상체를 대고 핸들을 잡은 뒤 견갑골을 모으며 배꼽 쪽으로 당깁니다.", caution: "어깨가 솟거나 팔 힘으로만 당기지 않도록 등의 수축에 집중하세요." }
+        ];
+
         function scanMachine(event) {
             const view = document.getElementById('scanner-view');
             view.innerHTML = `<span style="color:#007bff;">[ ${MODEL_NAME} 모델로 기구 분석 중... ]</span>`;
             
             setTimeout(() => {
+                const randomMachine = machineList[Math.floor(Math.random() * machineList.length)];
                 view.innerHTML = `[ 스캔 완료 ]`;
                 document.getElementById('machine-info-card').style.display = 'block';
-                document.getElementById('mi-name').innerText = "랫 풀다운 머신 (Lat Pulldown Machine)";
-                document.getElementById('mi-usage').innerText = "패드 높이를 무릎이 고정되도록 맞추고, 바를 넓게 잡아 쇄골 라인으로 당깁니다.";
-                document.getElementById('mi-caution').innerText = "허리를 과도하게 뒤로 젖히지 않도록 주의하고 어깨가 솟지 않게 하세요.";
+                document.getElementById('mi-name').innerText = randomMachine.name;
+                document.getElementById('mi-usage').innerText = randomMachine.usage;
+                document.getElementById('mi-caution').innerText = randomMachine.caution;
             }, 1000);
         }
 
-        // 기구 스캐너 초기화 함수
         function resetScanner() {
             const view = document.getElementById('scanner-view');
             view.innerHTML = `[ 카메라 화면 / 기구 촬영 영역 ]`;
             document.getElementById('machine-info-card').style.display = 'none';
-            document.getElementById('machine-img-input').value = ''; // 파일 input 초기화
+            document.getElementById('machine-img-input').value = '';
         }
 
-        // 3번 창: 부위별 운동 도감 (부위당 5개 구성)
+        // 3번 창: 운동 도감 데이터
         const fullPediaData = {
             "등": [
                 { name: "1. 랫 풀다운", target: "광배근, 대원근", usage: "상체를 살짝 뒤로 젖히고 쇄골 쪽으로 당김", caution: "반동을 이용해 당기지 않기" },
@@ -345,10 +361,12 @@
             document.getElementById('pedia-modal').style.display = 'none';
         }
 
-        // 4번 창: 캘린더 및 기록 로직 (2026~2028 지원)
+        // 4번 창: 캘린더 및 독립 그래프 3개 로직
         let selectedDateStr = "";
         let dbRecords = JSON.parse(localStorage.getItem('fitness_records') || '{}');
-        let progressChartInstance = null;
+        let chartInstance1 = null;
+        let chartInstance2 = null;
+        let chartInstance3 = null;
 
         function initCalendarSettings() {
             const monthSelect = document.getElementById('cal-month');
@@ -379,7 +397,8 @@
             for(let d=1; d<=lastDay; d++) {
                 const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const hasData = dbRecords[dateKey] ? 'background:#d1e7dd;' : '';
-                html += `<div class="day-cell" style="${hasData}" onclick="selectDate('${dateKey}')">${d}</div>`;
+                const isSelected = (selectedDateStr === dateKey) ? 'border: 2px solid #007bff;' : '';
+                html += `<div class="day-cell" style="${hasData}; ${isSelected}" onclick="selectDate('${dateKey}')">${d}</div>`;
             }
             daysContainer.innerHTML = html;
         }
@@ -394,6 +413,7 @@
             document.getElementById('rec-volume').value = data.volume;
             document.getElementById('rec-fat').value = data.fat;
             document.getElementById('rec-height').value = data.height;
+            renderCalendar(); // 선택된 셀 테두리 갱신
         }
 
         function saveDayRecord() {
@@ -407,10 +427,10 @@
             localStorage.setItem('fitness_records', JSON.stringify(dbRecords));
             alert('기록이 저장되었습니다.');
             renderCalendar();
-            initChart();
+            initCharts();
         }
 
-        function initChart() {
+        function initCharts() {
             const year = document.getElementById('cal-year').value;
             const month = document.getElementById('cal-month').value;
             const lastDay = new Date(year, month, 0).getDate();
@@ -418,6 +438,8 @@
             let labels = [];
             let weightData = [];
             let volumeData = [];
+            let fatData = [];
+            let heightData = [];
             
             for(let d=1; d<=lastDay; d++) {
                 labels.push(`${d}일`);
@@ -425,57 +447,67 @@
                 if(dbRecords[dateKey]) {
                     weightData.push(dbRecords[dateKey].weight ? parseFloat(dbRecords[dateKey].weight) : null);
                     volumeData.push(dbRecords[dateKey].volume ? parseFloat(dbRecords[dateKey].volume) : null);
+                    fatData.push(dbRecords[dateKey].fat ? parseFloat(dbRecords[dateKey].fat) : null);
+                    heightData.push(dbRecords[dateKey].height ? parseFloat(dbRecords[dateKey].height) : null);
                 } else {
                     weightData.push(null);
                     volumeData.push(null);
+                    fatData.push(null);
+                    heightData.push(null);
                 }
             }
 
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            if(progressChartInstance) {
-                progressChartInstance.destroy();
-            }
-
-            progressChartInstance = new Chart(ctx, {
+            // 1. 몸무게 & 운동량 이중 꺾은선 그래프
+            const ctx1 = document.getElementById('progressChart1').getContext('2d');
+            if(chartInstance1) chartInstance1.destroy();
+            chartInstance1 = new Chart(ctx1, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
-                        {
-                            label: '몸무게 (kg)',
-                            data: weightData,
-                            borderColor: '#007bff',
-                            backgroundColor: 'rgba(0,123,255,0.1)',
-                            yAxisID: 'y-weight',
-                            tension: 0.1
-                        },
-                        {
-                            label: '운동량 (볼륨)',
-                            data: volumeData,
-                            borderColor: '#28a745',
-                            backgroundColor: 'rgba(40,167,69,0.1)',
-                            yAxisID: 'y-volume',
-                            tension: 0.1
-                        }
+                        { label: '몸무게 (kg)', data: weightData, borderColor: '#007bff', backgroundColor: 'rgba(0,123,255,0.1)', yAxisID: 'y-weight', tension: 0.1 },
+                        { label: '운동량 (볼륨)', data: volumeData, borderColor: '#28a745', backgroundColor: 'rgba(40,167,69,0.1)', yAxisID: 'y-volume', tension: 0.1 }
                     ]
                 },
                 options: {
                     responsive: true,
                     scales: {
-                        'y-weight': {
-                            type: 'linear',
-                            position: 'left',
-                            min: 20,
-                            max: 120,
-                            title: { display: true, text: '몸무게 (kg)' }
-                        },
-                        'y-volume': {
-                            type: 'linear',
-                            position: 'right',
-                            min: 0,
-                            title: { display: true, text: '운동량' },
-                            grid: { drawOnChartArea: false }
-                        }
+                        'y-weight': { type: 'linear', position: 'left', min: 20, max: 120, title: { display: true, text: '몸무게 (kg)' } },
+                        'y-volume': { type: 'linear', position: 'right', min: 0, title: { display: true, text: '운동량' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            // 2. 체지방률 (%) 그래프
+            const ctx2 = document.getElementById('progressChart2').getContext('2d');
+            if(chartInstance2) chartInstance2.destroy();
+            chartInstance2 = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: '체지방률 (%)', data: fatData, borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', tension: 0.1 }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { type: 'linear', position: 'left', min: 0, max: 50, title: { display: true, text: '체지방률 (%)' } }
+                    }
+                }
+            });
+
+            // 3. 키 (cm) 그래프
+            const ctx3 = document.getElementById('progressChart3').getContext('2d');
+            if(chartInstance3) chartInstance3.destroy();
+            chartInstance3 = new Chart(ctx3, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: '키 (cm)', data: heightData, borderColor: '#ffc107', backgroundColor: 'rgba(255,193,7,0.1)', tension: 0.1 }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { type: 'linear', position: 'left', min: 100, max: 220, title: { display: true, text: '키 (cm)' } }
                     }
                 }
             });
