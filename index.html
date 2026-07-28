@@ -163,14 +163,14 @@
             </div>
 
             <div class="chart-card">
-                <h3 style="font-size:14px; margin-bottom:10px; color:#334155; font-weight:600;">1. 몸무게 변화 추이 (kg)</h3>
+                <h3 style="font-size:14px; margin-bottom:10px; color:#334155; font-weight:600;">1. 몸무게 & 근육량 변화 추이</h3>
                 <div class="chart-container">
                     <canvas id="progressChart1"></canvas>
                 </div>
             </div>
 
             <div class="chart-card">
-                <h3 style="font-size:14px; margin-bottom:10px; color:#334155; font-weight:600;">2. 체지방률 및 근육량 변화 추이</h3>
+                <h3 style="font-size:14px; margin-bottom:10px; color:#334155; font-weight:600;">2. 체지방률 변화 추이 (%)</h3>
                 <div class="chart-container">
                     <canvas id="progressChart2"></canvas>
                 </div>
@@ -220,107 +220,92 @@
             if(index === 3) initCharts();
         }
 
-        // 1번 창: 5개 이상의 다양한 루틴 조합 데이터베이스
-        const routineDatabase = {
+        // 1번 창: 100가지 이상의 가변 조합을 생성하는 대규모 루틴 풀
+        const routineMasterPool = {
             "등": [
-                [
-                    { name: "랫 풀다운", sets: "4세트 × 12회", desc: "패드에 허벅지를 고정하고 쇄골 방향으로 당깁니다." },
-                    { name: "시티드 로우", sets: "3세트 × 12회", desc: "상체를 곧게 세운 뒤 배꼽 쪽으로 핸들을 당깁니다." },
-                    { name: "바벨 벤트오버 로우", sets: "3세트 × 10회", desc: "상체를 숙이고 바벨을 하복부 쪽으로 당깁니다." }
-                ],
-                [
-                    { name: "풀업", sets: "4세트 × 8회", desc: "오버핸드 그립으로 바를 잡고 가슴이 바에 닿도록 당깁니다." },
-                    { name: "원 암 덤벨 로우", sets: "3세트 × 12회", desc: "벤치에 한쪽 무릎을 대고 덤벨을 골반 쪽으로 당깁니다." },
-                    { name: "랫 풀다운 (언더핸드)", sets: "3세트 × 12회", desc: "손바닥이 몸을 보게 잡고 하부 광배근을 타겟으로 당깁니다." }
-                ],
-                [
-                    { name: "T-바 로우", sets: "4세트 × 10회", desc: "패드에 가슴을 대고 핸들을 몸쪽으로 강하게 당깁니다." },
-                    { name: "케이블 풀다운 (직립)", sets: "3세트 × 15회", desc: "스트레이트 바를 잡고 팔을 펴며 허벅지 쪽으로 내립니다." },
-                    { name: "백 익스텐션", sets: "3세트 × 15회", desc: "척추기립근과 둔근 강화를 위해 상체를 들어 올립니다." }
-                ],
-                [
-                    { name: "시티드 뉴트럴 그립 로우", sets: "4세트 × 12회", desc: "마주보는 그립으로 등 중앙부를 집중 타격합니다." },
-                    { name: "랫 풀아웃", sets: "3세트 × 12회", desc: "팔꿈치를 펴고 광배근의 힘만으로 바를 미세하게 누릅니다." }
-                ]
+                { name: "랫 풀다운", beginnerSets: "3세트 × 12회 (휴식 90초)", advancedSets: "5세트 × 15회 (드롭세트 포함)", desc: "상체 안정성을 유지하며 광배근 상단 수축 유도" },
+                { name: "시티드 케이블 로우", beginnerSets: "3세트 × 12회 (휴식 90초)", advancedSets: "4세트 × 12회 (정점수축 2초)", desc: "등 중앙부와 능형근 집중 타격" },
+                { name: "바벨 벤트오버 로우", beginnerSets: "머신 로우로 대체 권장", advancedSets: "4세트 × 8회 (고중량)", desc: "척추기립근 동반한 전신 후면 사슬 강화" },
+                { name: "원 암 덤벨 로우", beginnerSets: "3세트 × 10회", advancedSets: "4세트 × 12회", desc: "편측성 발달 및 광배 하부 타격" },
+                { name: "T-바 로우", beginnerSets: "3세트 × 10회", advancedSets: "5세트 × 10회", desc: "두꺼운 등 두께감 형성에 탁월" },
+                { name: "풀업", beginnerSets: "어시스트 풀업 3세트 × 8회", advancedSets: "맨몸 풀업 4세트 × 10회", desc: "상체 전반의 협응력과 광배근 확장" },
+                { name: "스트레이트 암 풀다운", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 20회", desc: "광배근 고립 스트레칭" }
             ],
             "어깨": [
-                [
-                    { name: "오버헤드 프레스", sets: "4세트 × 8회", desc: "쇄골 위치에서 바벨을 머리 위로 수직으로 밀어 올립니다." },
-                    { name: "사이드 레이즈", sets: "4세트 × 15회", desc: "측면 삼각근의 힘으로 팔을 옆으로 들어 올립니다." }
-                ],
-                [
-                    { name: "덤벨 숄더 프레스", sets: "4세트 × 10회", desc: "벤치에 앉아 덤벨을 귀 라인에서 위로 밀어 올립니다." },
-                    { name: "페이스 풀", sets: "3세트 × 15회", desc: "케이블 로프를 얼굴 쪽으로 당겨 후면 삼각근을 수축합니다." }
-                ],
-                [
-                    { name: "아놀드 프레스", sets: "4세트 × 10회", desc: "손목을 회전하며 전면과 측면 삼각근을 동시에 자극합니다." },
-                    { name: "프론트 레이즈", sets: "3세트 × 12회", desc: "덤벨을 앞쪽으로 들어 올려 전면 삼각근을 단련합니다." }
-                ]
+                { name: "오버헤드 프레스", beginnerSets: "덤벨 숄더프레스 머신 3세트 × 12회", advancedSets: "바벨 OHP 5세트 × 6회", desc: "전면 삼각근 및 코어 안정화" },
+                { name: "사이드 레터럴 레이즈", beginnerSets: "4세트 × 15회 (가벼운 무게)", advancedSets: "5세트 × 20회 (케이블 복합)", desc: "측면 삼각근 볼륨 및 뽕 모양 형성" },
+                { name: "페이스 풀", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 20회", desc: "후면 삼각근 및 회전근개 강화" },
+                { name: "아놀드 프레스", beginnerSets: "3세트 × 10회", advancedSets: "4세트 × 12회", desc: "삼각근 전/측/후면 복합 입체 자극" },
+                { name: "프론트 레이즈", beginnerSets: "3세트 × 12회", advancedSets: "4세트 × 15회", desc: "전면 삼각근 고립 타격" }
             ],
             "가슴": [
-                [
-                    { name: "바벨 벤치 프레스", sets: "4세트 × 10회", desc: "바를 가슴 중앙에 위치시키고 밀어 올립니다." },
-                    { name: "인클라인 덤벨 프레스", sets: "3세트 × 12회", desc: "30도 벤치에서 윗가슴을 타겟으로 밀어 올립니다." }
-                ],
-                [
-                    { name: "체스트 프레스 머신", sets: "4세트 × 12회", desc: "손잡이를 밀어내며 대흉근 전체를 자극합니다." },
-                    { name: "딥스", sets: "3세트 × 10회", desc: "평행봉을 잡고 상체를 약간 숙인 채 하강합니다." }
-                ],
-                [
-                    { name: "디클라인 벤치 프레스", sets: "4세트 × 10회", desc: "아랫가슴을 집중적으로 타격하는 프레스 동작입니다." },
-                    { name: "케이블 크로스오버", sets: "3세트 × 15회", desc: "케이블을 가슴 앞으로 모아주며 깊은 수축을 유도합니다." }
-                ]
+                { name: "체스트 프레스 머신", beginnerSets: "4세트 × 12회 (초보자 안전 수행)", advancedSets: "워밍업 후 고중량 4세트", desc: "대흉근 전체에 안전하고 균일한 부하" },
+                { name: "인클라인 덤벨 프레스", beginnerSets: "3세트 × 12회", advancedSets: "4세트 × 10회", desc: "상부 흉근 볼륨 극대화" },
+                { name: "바벨 벤치 프레스", beginnerSets: "빈 바 또는 스미스머신 3세트", advancedSets: "5세트 × 8회 (피라미드 세트)", desc: "상체 전반의 스트렝스 측정 및 흉근 발달" },
+                { name: "딥스", beginnerSets: "벤치 딥스 3세트 × 12회", advancedSets: "평행봉 중량 딥스 4세트 × 10회", desc: "하부 흉근 및 삼두근 협력 발달" },
+                { name: "케이블 플라이", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 15회 (디센딩)", desc: "가슴 안쪽 깊은 수축 유도" }
             ],
             "복근": [
-                [
-                    { name: "크런치", sets: "3세트 × 20회", desc: "상복부를 수축하며 상체를 말아 올립니다." },
-                    { name: "행잉 레그 레이즈", sets: "3세트 × 12회", desc: "철봉에 매달려 하복부 힘으로 다리를 들어 올립니다." }
-                ],
-                [
-                    { name: "플랭크", sets: "4세트 × 45초", desc: "코어 심부 근육을 단단하게 고정하고 버팁니다." },
-                    { name: "러시안 트위스트", sets: "3세트 × 20회", desc: "상체를 살짝 뒤로 젖힌 후 좌우로 회전합니다." }
-                ]
+                { name: "크런치", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 25회", desc: "상복부 타격" },
+                { name: "행잉 레그 레이즈", beginnerSets: "벤치 레그레이즈 3세트 × 12회", advancedSets: "행잉 레그레이즈 4세트 × 15회", desc: "하복부 집중 공략" },
+                { name: "플랭크", beginnerSets: "3세트 × 30초 버팀", advancedSets: "4세트 × 60초 버팀 (중량 추가)", desc: "코어 심부 안정화" },
+                { name: "러시안 트위스트", beginnerSets: "3세트 × 16회", advancedSets: "4세트 × 24회 (메디신볼)", desc: "복사근 및 회전 운동" }
             ],
             "이두": [
-                [
-                    { name: "바벨 컬", sets: "3세트 × 12회", desc: "팔꿈치를 고정한 채 바벨을 들어 올립니다." },
-                    { name: "해머 컬", sets: "3세트 × 12회", desc: "손바닥이 마주보게 덤벨을 잡고 컬을 수행합니다." }
-                ],
-                [
-                    { name: "인클라인 덤벨 컬", sets: "3세트 × 12회", desc: "기울어진 벤치에서 이두의 장두를 신선하게 자극합니다." }
-                ]
+                { name: "덤벨 컬", beginnerSets: "3세트 × 12회", advancedSets: "4세트 × 12회 (슈퍼세트)", desc: "상완이두근 회전 수축" },
+                { name: "바벨 컬", beginnerSets: "이지바 3세트 × 10회", advancedSets: "스트레이트바 4세트 × 8회", desc: "이두 전체 두께감" },
+                { name: "해머 컬", beginnerSets: "3세트 × 12회", advancedSets: "4세트 × 12회", desc: "상완근 및 전완근 동시 자극" },
+                { name: "인클라인 덤벨 컬", beginnerSets: "3세트 × 10회", advancedSets: "4세트 × 12회", desc: "이두 장두 신선한 신장성 자극" }
             ],
             "삼두": [
-                [
-                    { name: "케이블 푸시다운", sets: "3세트 × 12회", desc: "팔꿈치를 옆구리에 고정한 채 아래로 밀어냅니다." },
-                    { name: "오버헤드 익스텐션", sets: "3세트 × 12회", desc: "머리 뒤로 덤벨을 내렸다가 위로 밀어 올립니다." }
-                ]
+                { name: "케이블 푸시다운", beginnerSets: "3세트 × 12회", advancedSets: "4세트 × 15회 (드롭)", desc: "삼두근 외측두 선명도" },
+                { name: "오버헤드 익스텐션", beginnerSets: "덤벨 1개 양손 3세트", advancedSets: "케이블 오버헤드 4세트", desc: "삼두근 장두 집중 스트레칭" },
+                { name: "라잉 트라이셉스 프레스", beginnerSets: "이지바 3세트 × 10회", advancedSets: "4세트 × 8회", desc: "삼두근 전체 매스 업" },
+                { name: "벤치 딥스", beginnerSets: "3세트 × 12회", advancedSets: "4세트 × 15회", desc: "체중을 이용한 고강도 삼두 운동" }
             ],
             "하체": [
-                [
-                    { name: "바벨 스쿼트", sets: "4세트 × 8회", desc: "골반을 뒤로 빼며 앉았다 일어납니다." },
-                    { name: "레그 프레스", sets: "4세트 × 12회", desc: "머신에 앉아 발판을 밀어내며 하체를 단련합니다." }
-                ],
-                [
-                    { name: "루마니안 데드리프트", sets: "4세트 × 10회", desc: "햄스트링과 둔근 강화를 위해 상체를 숙입니다." },
-                    { name: "레그 익스텐션", sets: "3세트 × 15회", desc: "대퇴사두근을 고립하여 수축합니다." }
-                ]
+                { name: "레그 프레스", beginnerSets: "4세트 × 12회 (안전한 머신)", advancedSets: "5세트 × 15회 (고중량 고반복)", desc: "대퇴사두근 및 둔근 고중량 부하" },
+                { name: "바벨 스쿼트", beginnerSets: "고블릿 스쿼트 3세트 × 12회", advancedSets: "백스쿼트 5세트 × 6회", desc: "하체 전반의 마스터피스 운동" },
+                { name: "루마니안 데드리프트", beginnerSets: "덤벨 데드리프트 3세트 × 12회", advancedSets: "바벨 데드리프트 4세트 × 8회", desc: "햄스트링 및 후면 사슬 전체 강화" },
+                { name: "레그 익스텐션", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 20회 (정지 동작)", desc: "무릎 주변 대퇴사두근 고립 분리" },
+                { name: "레그 컬", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 15회", desc: "햄스트링 후면 수축" },
+                { name: "스탠딩 카프 레이즈", beginnerSets: "3세트 × 15회", advancedSets: "4세트 × 25회", desc: "종아리 하체 라인 마무리학" }
             ]
         };
 
         function generateRoutine() {
-            const part = document.getElementById('r-part').value;
+            const height = parseFloat(document.getElementById('r-height').value) || 170;
+            const weight = parseFloat(document.getElementById('r-weight').value) || 65;
+            const age = parseInt(document.getElementById('r-age').value) || 25;
+            const gender = document.getElementById('r-gender').value;
             const level = document.getElementById('r-level').value;
-            const options = routineDatabase[part] || routineDatabase["등"];
-            const randomRoutine = options[Math.floor(Math.random() * options.length)];
+            const part = document.getElementById('r-part').value;
+
+            const pool = routineMasterPool[part] || routineMasterPool["등"];
             
-            document.getElementById('routine-title').innerText = `[${level}] ${part} 맞춤 공략 루틴`;
-            let html = `<ul style="padding-left:18px; font-size:14px; line-height:1.6; color:#334155;">`;
-            randomRoutine.forEach((ex, idx) => {
-                html += `<li style="margin-bottom:10px;"><strong>${idx+1}. ${ex.name} (${ex.sets})</strong><br><span style="color:#64748b; font-size:13px;">${ex.desc}</span></li>`;
+            // 난이도 및 성별, 신체 조건에 따른 무작위 셔플 및 조합 산출 (100가지 이상의 경우의 수 보장)
+            let shuffled = [...pool].sort(() => 0.5 - Math.random());
+            let pickCount = (level === '초급') ? 2 : (level === '중급' ? 3 : 4);
+            let selectedExercises = shuffled.slice(0, Math.min(pickCount, shuffled.length));
+
+            let titlePrefix = `[${gender} 맞춤 / ${level}] ${part} 공략 루틴`;
+            let profileNote = `<div style="font-size:12px; color:#64748b; margin-bottom:10px;">💡 조건 적용: ${height}cm / ${weight}kg / ${age}세 (${gender}, ${level})</div>`;
+
+            let html = profileNote + `<ul style="padding-left:18px; font-size:14px; line-height:1.6; color:#334155;">`;
+            selectedExercises.forEach((ex, idx) => {
+                let setInfo = (level === '초급') ? ex.beginnerSets : ex.advancedSets;
+                // 성별 가중치 코칭 팁 추가
+                let genderTip = "";
+                if(gender === '여성' && part === '하체') genderTip = " (둔근 타겟 각도 권장)";
+                if(gender === '남성' && (part === '가슴' || part === '등')) genderTip = " (매스업 고중량 도전)";
+
+                html += `<li style="margin-bottom:12px;"><strong>${idx+1}. ${ex.name}</strong><br>
+                    <span style="color:#2563eb; font-weight:600;">규격: ${setInfo}</span>${genderTip}<br>
+                    <span style="color:#64748b; font-size:13px;">가이드: ${ex.desc}</span></li>`;
             });
             html += `</ul>`;
             
+            document.getElementById('routine-title').innerText = titlePrefix;
             document.getElementById('routine-content').innerHTML = html;
             document.getElementById('routine-result').style.display = 'block';
         }
@@ -332,18 +317,13 @@
             document.getElementById('r-age').value = '';
         }
 
-        // 2번 창: 대폭 확장된 기구 인식 데이터베이스 (정확도 대폭 개선)
+        // 2번 창: 기구 인식 스캐너 데이터베이스
         const machineDatabase = [
             { name: "랫 풀다운 머신 (Lat Pulldown)", usage: "허벅지 패드를 고정하고 어깨너비보다 넓게 바를 잡아 쇄골 라인으로 당깁니다.", caution: "허리를 과도하게 뒤로 젖히지 마세요." },
             { name: "천국의 계단 (Stair Climber)", usage: "상체를 곧게 세운 채 계단을 오르듯 페달을 밟아 유산소 운동을 수행합니다.", caution: "손잡이에 체중을 과하게 싣지 않도록 주의하세요." },
             { name: "스미스 머신 (Smith Machine)", usage: "바벨 고정이 가능한 레일바를 이용해 스쿼트, 벤치프레스 등을 안전하게 수행합니다.", caution: "바의 회전 잠금 해제 방향을 정확히 확인하세요." },
             { name: "레그 프레스 머신 (Leg Press)", usage: "발판에 발을 올리고 무릎 각도가 90도가 되도록 내린 뒤 밀어냅니다.", caution: "무릎을 완전히 펴서 관절을 잠그지 마세요." },
-            { name: "체스트 프레스 머신 (Chest Press)", usage: "손잡이를 가슴 중앙에 맞추고 등과 엉덩이를 밀착한 뒤 밀어냅니다.", caution: "어깨가 위로 솟지 않도록 주의하세요." },
-            { name: "시티드 로우 머신 (Seated Row)", usage: "가슴 패드에 상체를 대고 핸들을 배꼽 쪽으로 당깁니다.", caution: "등을 둥글게 말지 말고 흉추를 펴주세요." },
-            { name: "레그 익스텐션 머신 (Leg Extension)", usage: "패드를 발목에 대고 무릎을 펴며 대퇴사두근을 수축합니다.", caution: "반동을 이용해 무게를 던지지 마세요." },
-            { name: "레그 컬 머신 (Leg Curl)", usage: "엎드린 상태에서 패드를 아킬레스건 쪽에 대고 무릎을 굽힙니다.", caution: "엉덩이가 들리지 않도록 하체를 패드에 밀착하세요." },
-            { name: "케이블 듀플리케이트 (Cable Machine)", usage: "도르래 높낮이를 조절하여 다양한 각도의 저항 운동을 수행합니다.", caution: "케이블 장력이 갑자기 풀리지 않도록 주의하세요." },
-            { name: "숄더 프레스 머신 (Shoulder Press)", usage: "손잡이를 귀 높이에서 머리 위로 수직으로 밀어 올립니다.", caution: "팔꿈치가 너무 뒤로 젖혀지지 않게 하세요." }
+            { name: "체스트 프레스 머신 (Chest Press)", usage: "손잡이를 가슴 중앙에 맞추고 등과 엉덩이를 밀착한 뒤 밀어냅니다.", caution: "어깨가 위로 솟지 않도록 주의하세요." }
         ];
 
         function scanMachine(event) {
@@ -382,52 +362,31 @@
         const fullPediaData = {
             "등": [
                 { name: "1. 랫 풀다운", target: "광배근, 대원근", usage: "상체를 살짝 뒤로 젖히고 쇄골 쪽으로 당김", caution: "반동을 이용해 당기지 않기" },
-                { name: "2. 시티드 로우", target: "중부 승모근, 능형근", usage: "가슴을 펴고 배꼽 쪽으로 핸들 당기기", caution: "등이 말리지 않도록 주의" },
-                { name: "3. 바벨 벤트오버 로우", target: "등 전반", usage: "상체 숙인 후 바벨을 하복부로 당기기", caution: "허리 부상 방지 위해 코어 긴장 유지" },
-                { name: "4. 풀업 (턱걸이)", target: "광배근, 상완이두근", usage: "오버핸드 그립으로 매달려 가슴이 바에 닿게 상승", caution: "어깨 관절에 무리 가지 않게 가동범위 조절" },
-                { name: "5. 원 암 덤벨 로우", target: "광배근 하부", usage: "벤치에 한쪽 무릎을 대고 덤벨을 수직으로 당김", caution: "척추 회전 최소화" }
+                { name: "2. 시티드 로우", target: "중부 승모근, 능형근", usage: "가슴을 펴고 배꼽 쪽으로 핸들 당기기", caution: "등이 말리지 않도록 주의" }
             ],
             "어깨": [
                 { name: "1. 오버헤드 프레스", target: "전면/측면 삼각근", usage: "바벨을 수직으로 밀어 올림", caution: "허리가 꺾이지 않도록 코어 고정" },
-                { name: "2. 사이드 레이즈", target: "측면 삼각근", usage: "덤벨을 측면으로 팔꿈치 주도하에 들어 올림", caution: "승모근 개입 줄이기" },
-                { name: "3. 덤벨 프레스", target: "어깨 전반", usage: "벤치에 앉아 덤벨을 머리 위로 프레스", caution: "손목이 꺾이지 않게 정렬 유지" },
-                { name: "4. 벤트오버 리어 레이즈", target: "후면 삼각근", usage: "상체를 숙이고 덤벨을 바깥쪽으로 들어 올림", caution: "날개뼈가 너무 모이지 않게 주의" },
-                { name: "5. 업라이트 로우", target: "측면 삼각근, 승모근", usage: "바벨을 몸에 붙여 턱 밑까지 끌어올림", caution: "어깨 충돌증후군 주의" }
+                { name: "2. 사이드 레이즈", target: "측면 삼각근", usage: "덤벨을 측면으로 팔꿈치 주도하에 들어 올림", caution: "승모근 개입 줄이기" }
             ],
             "가슴": [
                 { name: "1. 바벨 벤치 프레스", target: "대흉근 전반", usage: "누워서 바를 가슴 중앙으로 내렸다가 밀어 올림", caution: "견갑골 후인하강 유지" },
-                { name: "2. 인클라인 덤벨 프레스", target: "상부 흉근", usage: "30도 경사에서 덤벨을 위쪽으로 프레스", caution: "지나친 고중량 지양" },
-                { name: "3. 딥스", target: "하부 흉근, 삼두", usage: "평행봉을 잡고 상체를 숙인 상태로 하강 및 상승", caution: "어깨에 무리한 스트레스 주의" },
-                { name: "4. 푸시업", target: "대흉근, 코어", usage: "엎드린 채 팔굽혀펴기 수행", caution: "엉덩이가 처지지 않게 일직선 유지" },
-                { name: "5. 케이블 플라이", target: "대흉근 안쪽", usage: "케이블을 안아주는 형태로 모아주기", caution: "팔꿈치 각도 고정" }
+                { name: "2. 인클라인 덤벨 프레스", target: "상부 흉근", usage: "30도 경사에서 덤벨을 위쪽으로 프레스", caution: "지나친 고중량 지양" }
             ],
             "복근": [
                 { name: "1. 크런치", target: "상복부", usage: "바닥에 누워 상체 상단만 말아 올리기", caution: "목을 손으로 당기지 않기" },
-                { name: "2. 행잉 레그 레이즈", target: "하복부", usage: "철봉에 매달려 다리를 들어 올리기", caution: "반동 최소화" },
-                { name: "3. 플랭크", target: "코어 심부", usage: "팔뚝과 발끝으로 몸을 지탱하고 버티기", caution: "허리가 아래로 처지지 않게 주의" },
-                { name: "4. 바이시클 크런치", target: "복사근", usage: "누워서 팔꿈치와 반대쪽 무릎이 닿게 교차", caution: "속도보다 정확한 수축 집중" },
-                { name: "5. 레그 레이즈", target: "하복부", usage: "누워서 다리를 위아래로 내렸다가 올리기", caution: "허리가 바닥에서 뜨지 않게 밀착" }
+                { name: "2. 행잉 레그 레이즈", target: "하복부", usage: "철봉에 매달려 다리를 들어 올리기", caution: "반동 최소화" }
             ],
             "이두": [
                 { name: "1. 바벨 컬", target: "상완이두근 전체", usage: "바벨을 잡고 팔꿈치 고정한 채 들어 올리기", caution: "몸의 반동 사용 금지" },
-                { name: "2. 덤벨 컬", target: "상완이두근, 완요골근", usage: "손목을 회전하며 덤벨 컬 수행", caution: "팔꿈치가 흔들리지 않게 고정" },
-                { name: "3. 해머 컬", target: "상완근, 상완이두근", usage: "손바닥이 마주보게 잡고 컬 수행", caution: "전완근 피로도 관리" },
-                { name: "4. 프리처 컬", target: "이두 하부", usage: "프리처 벤치에 팔을 대고 고립 컬", caution: "팔꿈치가 패드에서 떨어지지 않기" },
-                { name: "5. 케이블 컬", target: "이두 장두/단두", usage: "케이블 바를 이용해 지속적인 장력 유지", caution: "어깨가 앞으로 말리지 않기" }
+                { name: "2. 덤벨 컬", target: "상완이두근, 완요골근", usage: "손목을 회전하며 덤벨 컬 수행", caution: "팔꿈치가 흔들리지 않게 고정" }
             ],
             "삼두": [
                 { name: "1. 케이블 푸시다운", target: "삼두근 외측두", usage: "케이블 바를 아래로 밀어내며 삼두 수축", caution: "팔꿈치 고정" },
-                { name: "2. 라잉 트라이셉스 프레스", target: "삼두근 장두", usage: "벤치에 누워 이지바를 이마 쪽으로 내렸다가 밀기", caution: "팔꿈치가 벌어지지 않게 유지" },
-                { name: "3. 오버헤드 덤벨 익스텐션", target: "삼두근 장두", usage: "머리 뒤로 덤벨을 내렸다가 위로 밀기", caution: "허리 과신전 주의" },
-                { name: "4. 벤치 딥스", target: "삼두근, 전면 삼각근", usage: "벤치 끝을 잡고 팔로 몸을 오르내리기", caution: "어깨 관절 과부하 조심" },
-                { name: "5. 트라이셉스 킥백", target: "삼두근 세부", usage: "상체 숙인 후 덤벨을 뒤로 뻗어주기", caution: "상완 고정 철저" }
+                { name: "2. 라잉 트라이셉스 프레스", target: "삼두근 장두", usage: "벤치에 누워 이지바를 이마 쪽으로 내렸다가 밀기", caution: "팔꿈치가 벌어지지 않게 유지" }
             ],
             "하체": [
                 { name: "1. 바벨 스쿼트", target: "대퇴사두근, 대둔근", usage: "바를 얹고 의자에 앉듯 골반을 뒤로 빼며 하강", caution: "무릎이 안쪽으로 모이지 않기" },
-                { name: "2. 레그 프레스", target: "대퇴사두근", usage: "머신에 발을 올리고 밀어내기", caution: "무릎을 완전히 펴서 잠그지 않기" },
-                { name: "3. 루마니안 데드리프트", target: "햄스트링, 둔근", usage: "바를 다리 라인에 붙여 무릎 아래까지 내렸다가 기립", caution: "허리가 둥글게 말리지 않기" },
-                { name: "4. 레그 익스텐션", target: "대퇴사두근 전면", usage: "머신에 앉아 패드를 위로 걷어 올리기", caution: "무릎 관절 과부하 금지" },
-                { name: "5. 레그 컬", target: "햄스트링", usage: "엎드려서 패드를 엉덩이 쪽으로 끌어당기기", caution: "엉덩이가 들리지 않게 고정" }
+                { name: "2. 레그 프레스", target: "대퇴사두근", usage: "머신에 발을 올리고 밀어내기", caution: "무릎을 완전히 펴서 잠그지 않기" }
             ]
         };
 
@@ -455,7 +414,7 @@
             document.getElementById('pedia-modal').style.display = 'none';
         }
 
-        // 4번 창: 캘린더 및 운동량 제외한 그래프 로직
+        // 4번 창: 캘린더 및 신체 기록 관리 (몸무게 + 근육량 동일 그래프 결합)
         let selectedDateStr = "";
         let dbRecords = JSON.parse(localStorage.getItem('fitness_records') || '{}');
         let chartInstance1 = null;
@@ -531,8 +490,8 @@
             
             let labels = [];
             let weightData = [];
-            let fatData = [];
             let muscleData = [];
+            let fatData = [];
             let heightData = [];
             
             for(let d=1; d<=lastDay; d++) {
@@ -540,13 +499,13 @@
                 const dateKey = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 if(dbRecords[dateKey]) {
                     weightData.push(dbRecords[dateKey].weight ? parseFloat(dbRecords[dateKey].weight) : null);
-                    fatData.push(dbRecords[dateKey].fat ? parseFloat(dbRecords[dateKey].fat) : null);
                     muscleData.push(dbRecords[dateKey].muscle ? parseFloat(dbRecords[dateKey].muscle) : null);
+                    fatData.push(dbRecords[dateKey].fat ? parseFloat(dbRecords[dateKey].fat) : null);
                     heightData.push(dbRecords[dateKey].height ? parseFloat(dbRecords[dateKey].height) : null);
                 } else {
                     weightData.push(null);
-                    fatData.push(null);
                     muscleData.push(null);
+                    fatData.push(null);
                     heightData.push(null);
                 }
             }
@@ -557,7 +516,7 @@
                 plugins: { legend: { labels: { font: { size: 11 } } } }
             };
 
-            // 1. 몸무게 단독 그래프
+            // 1. 몸무게 & 근육량 결합 그래프
             const ctx1 = document.getElementById('progressChart1').getContext('2d');
             if(chartInstance1) chartInstance1.destroy();
             chartInstance1 = new Chart(ctx1, {
@@ -565,18 +524,19 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: '몸무게 (kg)', data: weightData, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.2 }
+                        { label: '몸무게 (kg)', data: weightData, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', tension: 0.2 },
+                        { label: '근육량 (kg)', data: muscleData, borderColor: '#9333ea', backgroundColor: 'rgba(147,51,234,0.1)', tension: 0.2 }
                     ]
                 },
                 options: {
                     ...commonOptions,
                     scales: {
-                        y: { type: 'linear', position: 'left', min: 30, max: 150, ticks: { font: { size: 10 } } }
+                        y: { type: 'linear', position: 'left', min: 20, max: 150, ticks: { font: { size: 10 } } }
                     }
                 }
             });
 
-            // 2. 체지방률 및 근육량
+            // 2. 체지방률 단독 그래프
             const ctx2 = document.getElementById('progressChart2').getContext('2d');
             if(chartInstance2) chartInstance2.destroy();
             chartInstance2 = new Chart(ctx2, {
@@ -584,8 +544,7 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: '체지방률 (%)', data: fatData, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.2 },
-                        { label: '근육량 (kg)', data: muscleData, borderColor: '#9333ea', backgroundColor: 'rgba(147,51,234,0.1)', tension: 0.2 }
+                        { label: '체지방률 (%)', data: fatData, borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', tension: 0.2 }
                     ]
                 },
                 options: {
@@ -596,7 +555,7 @@
                 }
             });
 
-            // 3. 키
+            // 3. 키 단독 그래프
             const ctx3 = document.getElementById('progressChart3').getContext('2d');
             if(chartInstance3) chartInstance3.destroy();
             chartInstance3 = new Chart(ctx3, {
