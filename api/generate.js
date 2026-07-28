@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const { prompt } = req.body;
+    const prompt = req.body.message;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt가 비어있습니다.' });
