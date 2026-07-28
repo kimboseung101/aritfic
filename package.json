@@ -1,9 +1,7 @@
 {
-  "name": "fitness-coaching-app",
+  "name": "fitness-app",
   "version": "1.0.0",
-  "description": "Fitness Coaching App with Gemini API",
-  "main": "index.html",
   "dependencies": {
-    "@google/genai": "latest"
+    "@google/genai": "^0.1.1"
   }
 }
