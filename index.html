@@ -91,20 +91,22 @@
             </div>
         </div>
 
-        <!-- 2번째 창: AI 기구 스캐너 -->
+        <!-- 2번째 창: AI 기구 인식 스캐너 -->
         <div id="tab2" class="tab-pane">
             <h2>AI 기구 인식 스캐너</h2>
             <div class="card">
                 <div class="scanner-view" id="scanner-view">
                     [ 카메라 화면 / 기구 촬영 영역 ]
                 </div>
-                <input type="file" id="machine-img-input" accept="image/*" onchange="scanMachine(event)">
+                <input type="file" id="machine-img-input" accept="image/*" onchange="scanMachine(event)" style="display:none;">
                 <button class="primary-btn" onclick="document.getElementById('machine-img-input').click();">기구 사진 업로드 및 스캔</button>
             </div>
             <div class="card" id="machine-info-card" style="display:none;">
                 <h3 id="mi-name" style="color:#007bff; margin-bottom:8px;"></h3>
                 <p><strong>사용법:</strong> <span id="mi-usage"></span></p>
                 <p style="margin-top:8px;"><strong>주의사항:</strong> <span id="mi-caution"></span></p>
+                <!-- 새로 추가된 다시 스캔하기 버튼 -->
+                <button class="primary-btn" style="background:#6c757d; margin-top:15px;" onclick="resetScanner()">다시 스캔하기</button>
             </div>
         </div>
 
@@ -184,7 +186,6 @@
     </nav>
 
     <script>
-        // 모델 정보 명시: gemini-3.1-flash-lite 연동 구조 가이드 설정 완료
         const MODEL_NAME = "gemini-3.1-flash-lite";
 
         // 탭 전환 로직
@@ -207,7 +208,7 @@
             ],
             "어깨": [
                 { name: "오버헤드 프레스 (OHP)", desc: "1. 쇄골 위치에서 바벨을 잡고 코어에 힘을 줍니다.\n2. 머리 위로 수직으로 밀어 올립니다." },
-                { name: "사이드  latérales 레이즈", desc: "1. 덤벨을 들고 측면 삼각근의 힘으로 팔을 옆으로 들어 올립니다." }
+                { name: "사이드 레이즈", desc: "1. 덤벨을 들고 측면 삼각근의 힘으로 팔을 옆으로 들어 올립니다." }
             ],
             "가슴": [
                 { name: "바벨 벤치 프레스", desc: "1. 벤치에 누워 바를 가슴 중앙에 위치시키고 밀어 올립니다." },
@@ -259,6 +260,14 @@
             }, 1000);
         }
 
+        // 기구 스캐너 초기화 함수
+        function resetScanner() {
+            const view = document.getElementById('scanner-view');
+            view.innerHTML = `[ 카메라 화면 / 기구 촬영 영역 ]`;
+            document.getElementById('machine-info-card').style.display = 'none';
+            document.getElementById('machine-img-input').value = ''; // 파일 input 초기화
+        }
+
         // 3번 창: 부위별 운동 도감 (부위당 5개 구성)
         const fullPediaData = {
             "등": [
@@ -270,7 +279,7 @@
             ],
             "어깨": [
                 { name: "1. 오버헤드 프레스", target: "전면/측면 삼각근", usage: "바벨을 수직으로 밀어 올림", caution: "허리가 꺾이지 않도록 코어 고정" },
-                { name: "2. 사이드  latérales 레이즈", target: "측면 삼각근", usage: "덤벨을 측면으로 팔꿈치 주도하에 들어 올림", caution: "승모근 개입 줄이기" },
+                { name: "2. 사이드 레이즈", target: "측면 삼각근", usage: "덤벨을 측면으로 팔꿈치 주도하에 들어 올림", caution: "승모근 개입 줄이기" },
                 { name: "3. 덤벨 프레스", target: "어깨 전반", usage: "벤치에 앉아 덤벨을 머리 위로 프레스", caution: "손목이 꺾이지 않게 정렬 유지" },
                 { name: "4. 벤트오버 리어 레이즈", target: "후면 삼각근", usage: "상체를 숙이고 덤벨을 바깥쪽으로 들어 올림", caution: "날개뼈가 너무 모이지 않게 주의" },
                 { name: "5. 업라이트 로우", target: "측면 삼각근, 승모근", usage: "바벨을 몸에 붙여 턱 밑까지 끌어올림", caution: "어깨 충돌증후군 주의" }
