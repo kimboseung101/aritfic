@@ -14,18 +14,30 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: 'GEMINI_API_KEY가 설정되지 않았습니다.' });
     }
 
-    // 프론트엔드가 prompt, message, text, 또는 그냥 통째로 보낸 것 중 뭐든 찾아내도록 처리
-    const userPrompt = req.body?.prompt || req.body?.message || req.body?.text || (typeof req.body === 'string' ? req.body : null);
+    // POST 본문, 텍스트, 쿼리 파라미터 등 어디에 들어있든 프롬프트를 악착같이 찾아냅니다.
+    let userPrompt = 
+      req.body?.prompt || 
+      req.body?.message || 
+      req.body?.text || 
+      (typeof req.body === 'string' ? req.body : null) ||
+      req.query?.prompt || 
+      req.query?.message;
+
+    // 만약 body가 파싱되지 않은 raw 스트링 상태라면 직접 처리
+    if (!userPrompt && req.body) {
+      try {
+        const parsed = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+        userPrompt = parsed.prompt || parsed.message || parsed.text;
+      } catch (e) {
+        userPrompt = req.body;
+      }
+    }
 
     if (!userPrompt) {
       return res.status(400).json({ error: '데이터를 받지 못했습니다. 요청 내용을 확인해주세요.' });
@@ -33,7 +45,7 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent(userPrompt);
+    const result = await model.generateContent(String(userPrompt));
     const response = await result.response;
     const text = response.text();
 
