@@ -4,21 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Fitness Manager</title>
-    <!-- Google Fonts: Poppins (제목), Noto Sans KR (본문) -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <!-- Chart.js 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* --- CSS 변수 및 기본 스타일 --- */
         :root {
-            --bg-color: #f0f2f5;
+            --bg-color: #f4f6f9;
             --card-bg: #ffffff;
             --text-primary: #1a1a1a;
             --text-secondary: #666666;
-            --accent-color: #007bff; /* 기존 파란색 유지 */
+            --accent-color: #007bff;
             --accent-hover: #0056b3;
-            --border-color: #e0e0e0;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --border-color: #e5e7eb;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
             --font-family-base: 'Noto Sans KR', sans-serif;
             --font-family-title: 'Poppins', sans-serif;
         }
@@ -34,7 +33,7 @@
             background-color: var(--bg-color);
             color: var(--text-primary);
             line-height: 1.6;
-            padding: 20px;
+            padding: 30px 20px;
         }
 
         .container {
@@ -42,11 +41,10 @@
             margin: 0 auto;
         }
 
-        /* --- 헤더 --- */
         header {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding-bottom: 15px;
-            border-bottom: 2px solid var(--accent-color);
+            border-bottom: 2px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -59,26 +57,52 @@
             font-size: 1.8rem;
         }
 
-        /* --- 메인 레이아웃 (스캐너 + 대시보드) --- */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr; /* 스캐너 1 : 그래프 영역 1.5 비율 */
-            gap: 30px;
+        /* 탭 내비게이션 바 디자인 */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #e9ecef;
+            padding: 6px;
+            border-radius: 14px;
         }
 
-        @media (max-width: 992px) {
-            .main-layout {
-                grid-template-columns: 1fr; /* 화면이 작아지면 세로로 배치 */
-            }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-family: var(--font-family-base);
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s ease;
         }
 
-        /* 공통 카드 스타일 */
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--accent-color);
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .card {
             background-color: var(--card-bg);
-            border-radius: 16px;
+            border-radius: 20px;
             box-shadow: var(--shadow);
-            padding: 25px;
+            padding: 30px;
             margin-bottom: 30px;
+            border: 1px solid var(--border-color);
         }
 
         .card-title {
@@ -92,107 +116,119 @@
             gap: 10px;
         }
 
-        /* --- 1. 기구 인식 스캐너 영역 (기존 기능 유지 및 디자인 개선) --- */
-        .scanner-section {
+        /* 1. 루틴 생성기 스타일 */
+        .routine-box {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
         }
 
-        .camera-preview {
+        textarea {
             width: 100%;
-            height: 300px; /* 고정 높이 유지 */
-            background-color: #2c2c2c; /* 기존 어두운 배경 유지 */
+            height: 120px;
+            padding: 15px;
             border-radius: 12px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #888;
-            font-size: 0.9rem;
-            border: 2px dashed var(--border-color);
-            position: relative;
-            overflow: hidden;
+            border: 1px solid var(--border-color);
+            font-family: var(--font-family-base);
+            font-size: 0.95rem;
+            resize: vertical;
         }
 
-        .camera-preview::after {
-            content: '📹 카메라 대기 중';
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
         }
 
-        .camera-preview img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            display: none; /* 이미지 업로드 전 숨김 */
-        }
-
-        .scan-btn {
+        .primary-btn {
             background-color: var(--accent-color);
             color: white;
             border: none;
             border-radius: 12px;
-            padding: 18px 20px;
+            padding: 16px 20px;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s, transform 0.1s;
+            transition: background-color 0.2s;
             font-family: var(--font-family-base);
-            box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
         }
 
-        .scan-btn:hover {
+        .primary-btn:hover {
             background-color: var(--accent-hover);
         }
 
-        .scan-btn:active {
-            transform: translateY(1px);
+        .routine-result {
+            margin-top: 20px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            white-space: pre-wrap;
+            line-height: 1.7;
         }
 
-        .result-panel {
-            border-top: 1px solid var(--border-color);
-            padding-top: 20px;
+        /* 2. 헬스 스캐너 스타일 */
+        .scanner-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
         }
+        @media(max-width: 768px) { .scanner-layout { grid-template-columns: 1fr; } }
 
-        .result-panel h3 {
-            font-size: 1.1rem;
-            color: var(--accent-color);
-            margin-bottom: 10px;
-        }
-
-        .result-text {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 5px;
-        }
-
-        .result-label {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-right: 5px;
-        }
-
-
-        /* --- 2. 그래프 대시보드 영역 --- */
-        .dashboard-section {
+        .camera-preview {
+            width: 100%;
+            height: 250px;
+            background-color: #1e1e1e;
+            border-radius: 14px;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #9ca3af;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .camera-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        /* 3. 백과사전 스타일 */
+        .encyclopedia-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
         }
+        .wiki-item {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        .wiki-item h3 { color: var(--accent-color); margin-bottom: 8px; }
 
+        /* 4. 기록장 (그래프 3개 대시보드) 스타일 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
         .graph-card {
-            height: 300px; /* 각 그래프 카드의 고정 높이 */
+            height: 320px;
             position: relative;
         }
 
-        /* --- 3. 푸터 --- */
         footer {
             text-align: center;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
             margin-top: 40px;
             padding-top: 20px;
             border-top: 1px solid var(--border-color);
         }
-
     </style>
 </head>
 <body>
@@ -200,49 +236,91 @@
 <div class="container">
     <header>
         <h1>AI Fitness Manager</h1>
-        <span>👋 홍길동님</span>
+        <span>👋 환영합니다</span>
     </header>
 
-    <div class="main-layout">
-        <!-- 왼쪽: 기구 인식 스캐너 섹션 -->
-        <div class="scanner-section card">
-            <h2 class="card-title">🔍 AI 기구 인식 스캐너</h2>
-            
-            <div class="camera-preview" id="cameraPreview">
-                <!-- 실제 카메라 영상 또는 업로드된 이미지가 들어갈 곳 -->
-                <img id="scannedImage" src="" alt="스캔된 기구">
+    <!-- 4대 탭 네비게이션 버튼 -->
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('routine')">🏋️ 루틴 생성기</button>
+        <button class="tab-btn" onclick="switchTab('scanner')">🔍 헬스 스캐너</button>
+        <button class="tab-btn" onclick="switchTab('encyclopedia')">📖 운동 백과사전</button>
+        <button class="tab-btn" onclick="switchTab('tracker')">📊 신체 기록장</button>
+    </div>
+
+    <!-- TAB 1: 루틴 생성기 -->
+    <div id="routine-tab" class="tab-content active">
+        <div class="card">
+            <h2 class="card-title">✨ 맞춤형 AI 루틴 생성기</h2>
+            <div class="routine-box">
+                <textarea id="promptInput" placeholder="예: 3분할 루틴 짜줘, 벤치프레스 증량하고 싶어 등등 원하는 내용을 적어주세요!"></textarea>
+                <button class="primary-btn" onclick="generateRoutine()">AI 루틴 생성하기</button>
             </div>
-
-            <!-- 실제 기능 구현을 위한 숨겨진 파일 입력 -->
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            
-            <button class="scan-btn" onclick="document.getElementById('fileInput').click()">
-                기구 사진 업로드 및 스캔
-            </button>
-
-            <div class="result-panel" id="resultPanel" style="display: none;">
-                <h3>인식된 헬스 기구</h3>
-                <p class="result-text"><span class="result-label">기구명:</span><span id="machineName">-</span></p>
-                <p class="result-text"><span class="result-label">사용법:</span><span id="usageInfo">-</span></p>
-                <p class="result-text"><span class="result-label">주의사항:</span><span id="cautionInfo">-</span></p>
+            <div id="routineResultContainer" style="display: none;">
+                <div class="routine-result" id="routineResultText"></div>
             </div>
         </div>
+    </div>
 
-        <!-- 오른쪽: 신체 데이터 그래프 대시보드 섹션 -->
-        <div class="dashboard-section">
-            <!-- 그래프 1: 이중 꺽은선 그래프 (몸무게 & 운동량) -->
+    <!-- TAB 2: 헬스 스캐너 -->
+    <div id="scanner-tab" class="tab-content">
+        <div class="card">
+            <h2 class="card-title">📸 AI 기구 인식 스캐너</h2>
+            <div class="scanner-layout">
+                <div>
+                    <div class="camera-preview" id="cameraPreview">
+                        <span id="cameraPlaceholder">📹 기구 사진을 업로드하세요</span>
+                        <img id="scannedImage" src="" alt="스캔된 기구">
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <button class="primary-btn" style="width: 100%;" onclick="document.getElementById('fileInput').click()">기구 사진 업로드</button>
+                </div>
+                <div style="background: #f8fafc; padding: 20px; border-radius: 14px; border: 1px solid var(--border-color);">
+                    <h3 style="color: var(--accent-color); margin-bottom: 15px;">인식 결과 분석</h3>
+                    <p style="margin-bottom: 10px;"><strong>기구명:</strong> <span id="machineName">-</span></p>
+                    <p style="margin-bottom: 10px;"><strong>사용법:</strong> <span id="usageInfo">-</span></p>
+                    <p><strong>주의사항:</strong> <span id="cautionInfo">-</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: 운동 백과사전 -->
+    <div id="encyclopedia-tab" class="tab-content">
+        <div class="card">
+            <h2 class="card-title">📖 주요 운동 백과사전</h2>
+            <div class="encyclopedia-grid">
+                <div class="wiki-item">
+                    <h3>벤치 프레스</h3>
+                    <p>가슴 근육(대흉근)과 삼두근을 강화하는 대표적인 상체 운동입니다.</p>
+                </div>
+                <div class="wiki-item">
+                    <h3>스쿼트</h3>
+                    <p>하체 전반(대퇴사두근, 엉덩이)을 강화하는 최고의 복합 관절 운동입니다.</p>
+                </div>
+                <div class="wiki-item">
+                    <h3>데드리프트</h3>
+                    <p>코어와 등, 하체 뒷면의 근력을 동시에 향상시키는 필수 전신 운동입니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: 신체 기록장 (요청하신 3가지 그래프 포함) -->
+    <div id="tracker-tab" class="tab-content">
+        <div class="dashboard-grid">
+            <!-- 그래프 1: 몸무게 & 운동량 이중 꺾은선 -->
             <div class="card graph-card">
                 <h3 class="card-title">📈 체중 & 운동량 변화</h3>
                 <canvas id="weightWorkoutChart"></canvas>
             </div>
 
-            <!-- 그래프 2: 꺽은선 그래프 (체지방률) -->
+            <!-- 그래프 2: 체지방률 (%) -->
             <div class="card graph-card">
                 <h3 class="card-title">📉 체지방률 (%)</h3>
                 <canvas id="bodyFatChart"></canvas>
             </div>
 
-            <!-- 그래프 3: 꺽은선 그래프 (키) -->
+            <!-- 그래프 3: 키 (cm) -->
             <div class="card graph-card">
                 <h3 class="card-title">📏 키 (cm)</h3>
                 <canvas id="heightChart"></canvas>
@@ -251,118 +329,118 @@
     </div>
 
     <footer>
-        © 2024 AI Fitness Pro. All rights reserved.
+        © 2026 AI Fitness Manager. All rights reserved.
     </footer>
 </div>
 
 <script>
-    // --- 자바스크립트: 기능 구현 및 그래프 데이터 ---
+    // --- 탭 전환 기능 ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId + '-tab').classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // 탭이 바뀔 때 그래프 크기 재조정 (깨짐 방지)
+        if(tabId === 'tracker') {
+            window.dispatchEvent(new Event('resize'));
+        }
+    }
 
-    // [기능] 파일 업로드 시 미리보기 및 결과 표시 시뮬레이션
+    // --- 루틴 생성기 (Gemini API 연동) ---
+    async function generateRoutine() {
+        const prompt = document.getElementById('promptInput').value.trim();
+        const resultContainer = document.getElementById('routineResultContainer');
+        const resultText = document.getElementById('routineResultText');
+
+        if (!prompt) {
+            alert('원하시는 루틴 내용을 입력해주세요!');
+            return;
+        }
+
+        resultContainer.style.display = 'block';
+        resultText.innerText = 'AI가 맞춤형 루틴을 생성하는 중입니다... ⏳';
+
+        try {
+            const response = await fetch('/api/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            const data = await response.json();
+            
+            if (response.ok) {
+                resultText.innerText = data.text;
+            } else {
+                resultText.innerText = '에러 발생: ' + (data.error || '알 수 없는 오류');
+            }
+        } catch (error) {
+            resultText.innerText = '서버 통신 실패: ' + error.message;
+        }
+    }
+
+    // --- 헬스 스캐너 이미지 업로드 처리 ---
     const fileInput = document.getElementById('fileInput');
-    const cameraPreview = document.getElementById('cameraPreview');
+    const cameraPlaceholder = document.getElementById('cameraPlaceholder');
     const scannedImage = document.getElementById('scannedImage');
-    const resultPanel = document.getElementById('resultPanel');
-    const machineName = document.getElementById('machineName');
-    const usageInfo = document.getElementById('usageInfo');
-    const cautionInfo = document.getElementById('cautionInfo');
 
     fileInput.addEventListener('change', function(event) {
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                // 이미지 미리보기 표시
                 scannedImage.src = e.target.result;
                 scannedImage.style.display = 'block';
-                
-                // 카메라 아이콘 숨기기
-                cameraPreview.style.border = 'none';
-                cameraPreview.querySelector('color').style.display = 'none';
+                cameraPlaceholder.style.display = 'none';
 
-                // 결과 패널 표시 (실제 앱에서는 AI 분석 결과로 채워짐)
-                showMockResult();
+                document.getElementById('machineName').innerText = "덤벨 프레스 머신";
+                document.getElementById('usageInfo').innerText = "벤치에 누워 손잡이를 잡고 가슴 힘으로 밀어 올립니다.";
+                document.getElementById('cautionInfo').innerText = "허리가 과도하게 꺾이지 않도록 주의하세요.";
             }
             reader.readAsDataURL(file);
         }
     });
 
-    // [기능] 가짜 결과 데이터 표시 함수
-    function showMockResult() {
-        resultPanel.style.display = 'block';
-        // 시뮬레이션 데이터
-        machineName.innerText = "덤벨 프레스 머신";
-        usageInfo.innerText = "벤치에 누워 손잡이를 잡고 가슴 근육 힘으로 밀어 올립니다.";
-        cautionInfo.innerText = "허리가 과도하게 꺾이지 않도록 주의하세요. 팔꿈치 관절을 완전히 펴지 마세요.";
-    }
-
-
-    // --- Chart.js 설정 ---
+    // --- Chart.js 그래프 3개 설정 ---
     Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
-    Chart.defaults.color = '#666666';
-    Chart.defaults.scale.grid.color = '#f0f0f0';
+    Chart.defaults.color = '#6b7280';
+    Chart.defaults.scale.grid.color = '#f3f4f6';
 
-    // 공통 옵션 (반응형)
     const commonOptions = {
         responsive: true,
-        maintainAspectRatio: false, // 부모 div 높이에 맞춤
+        maintainAspectRatio: false,
         plugins: {
-            legend: {
-                position: 'top',
-                labels: {
-                    boxWidth: 12,
-                    usePointStyle: true,
-                    padding: 15
-                }
-            },
-            tooltip: {
-                mode: 'index',
-                intersect: false,
-                backgroundColor: 'rgba(0,0,0,0.8)',
-                titleFont: { family: "'Poppins', sans-serif" },
-                cornerRadius: 8
-            }
+            legend: { position: 'top', labels: { boxWidth: 10, usePointStyle: true, padding: 15 } }
         },
-        interaction: {
-            mode: 'nearest',
-            axis: 'x',
-            intersect: false
-        },
-        scales: {
-            x: {
-                grid: { display: false } // X축 격자선 숨김
-            },
-            y: {
-                beginAtZero: false
-            }
-        }
+        scales: { x: { grid: { display: false } } }
     };
 
-    // [그래프 1] 몸무게 & 운동량 (이중 꺽은선)
+    // 1. 몸무게 & 운동량 이중 억은선 그래프
     const ctx1 = document.getElementById('weightWorkoutChart').getContext('2d');
     new Chart(ctx1, {
         type: 'line',
         data: {
-            labels: ['5월 1일', '5월 8일', '5월 15일', '5월 22일', '5월 29일'], // 날짜 데이터
+            labels: ['5/1', '5/8', '5/15', '5/22', '5/29'],
             datasets: [
                 {
                     label: '몸무게 (kg)',
                     data: [75.2, 74.8, 75.5, 74.1, 73.9],
-                    borderColor: '#007bff', // 파란색
-                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                    yAxisID: 'y', // 첫 번째 Y축 사용
-                    tension: 0.3, // 부드러운 곡선
-                    pointRadius: 4
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.05)',
+                    yAxisID: 'y',
+                    tension: 0.3,
+                    fill: true
                 },
                 {
-                    label: '총 운동량 (점수)',
+                    label: '운동량 (점수)',
                     data: [180, 210, 195, 230, 250],
-                    borderColor: '#28a745', // 초록색
-                    backgroundColor: 'rgba(40, 167, 69, 0.05)',
-                    yAxisID: 'y1', // 두 번째 Y축 사용
-                    borderDash: [5, 5], // 점선 스타일
-                    tension: 0.3,
-                    pointRadius: 4
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    yAxisID: 'y1',
+                    borderDash: [4, 4],
+                    tension: 0.3
                 }
             ]
         },
@@ -370,53 +448,60 @@
             ...commonOptions,
             scales: {
                 ...commonOptions.scales,
-                // 이중 Y축 설정
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: true, text: '몸무게 (kg)' }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    title: { display: true, text: '운동량 점수' },
-                    grid: { drawOnChartArea: false } // 오른쪽 축은 격자선 숨김
-                }
+                y: { type: 'linear', position: 'left', title: { display: true, text: '몸무게 (kg)' } },
+                y1: { type: 'linear', position: 'right', title: { display: true, text: '운동량' }, grid: { drawOnChartArea: false } }
             }
         }
     });
 
-    // [그래프 2] 체지방률 (%)
+    // 2. 체지방률 (%) 그래프
     const ctx2 = document.getElementById('bodyFatChart').getContext('2d');
     new Chart(ctx2, {
         type: 'line',
         data: {
-            labels: ['5월 1일', '5월 8일', '5월 15일', '5월 22일', '5월 29일'],
+            labels: ['5/1', '5/8', '5/15', '5/22', '5/29'],
             datasets: [{
                 label: '체지방률 (%)',
                 data: [22.1, 21.8, 22.5, 21.1, 20.9],
-                borderColor: '#dc3545', // 빨간색
-                backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                tension: 0.4,
-                fill: true // 영역 채우기
+                borderColor: '#f59e0b',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                tension: 0.3,
+                fill: true
             }]
         },
         options: {
             ...commonOptions,
             scales: {
                 ...commonOptions.scales,
-                y: { title: { display: true, text: '체지방 (%)' } }
+                y: { title: { display: true, text: '체지방률 (%)' } }
             }
         }
     });
 
-    // [그래프 3] 키 (cm)
+    // 3. 키 (cm) 그래프
     const ctx3 = document.getElementById('heightChart').getContext('2d');
     new Chart(ctx3, {
         type: 'line',
         data: {
-            labels: ['5월 1일', '5월 8일', '5월 15일', '5월 22일', '5월 29일'],
+            labels: ['5/1', '5/8', '5/15', '5/22', '5/29'],
             datasets: [{
-                label: '키 (
+                label: '키 (cm)',
+                data: [175.0, 175.0, 175.1, 175.0, 175.0],
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                ...commonOptions.scales,
+                y: { min: 174, max: 176, title: { display: true, text: '키 (cm)' } }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
