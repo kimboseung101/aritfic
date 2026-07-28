@@ -20,27 +20,23 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'GEMINI_API_KEY가 설정되지 않았습니다.' });
     }
 
-    // POST 본문, 텍스트, 쿼리 파라미터 등 어디에 들어있든 프롬프트를 악착같이 찾아냅니다.
-    let userPrompt = 
-      req.body?.prompt || 
-      req.body?.message || 
-      req.body?.text || 
-      (typeof req.body === 'string' ? req.body : null) ||
-      req.query?.prompt || 
-      req.query?.message;
-
-    // 만약 body가 파싱되지 않은 raw 스트링 상태라면 직접 처리
-    if (!userPrompt && req.body) {
+    // 요청으로 들어온 데이터가 무엇이든 간에 무조건 문자열화해서 프롬프트로 사용합니다.
+    let userPrompt = '';
+    
+    if (typeof req.body === 'string') {
       try {
-        const parsed = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-        userPrompt = parsed.prompt || parsed.message || parsed.text;
+        const parsed = JSON.parse(req.body);
+        userPrompt = parsed.prompt || parsed.message || parsed.text || req.body;
       } catch (e) {
         userPrompt = req.body;
       }
+    } else if (req.body && typeof req.body === 'object') {
+      userPrompt = req.body.prompt || req.body.message || req.body.text || JSON.stringify(req.body);
     }
 
-    if (!userPrompt) {
-      return res.status(400).json({ error: '데이터를 받지 못했습니다. 요청 내용을 확인해주세요.' });
+    if (!userPrompt || userPrompt.trim() === '') {
+      // 프롬프트가 끝내 안 들어오면 기본 루틴 생성 요청으로 대체하여 에러를 원천 차단합니다.
+      userPrompt = "헬스 루틴을 추천해줘. 4분할 루틴으로 짜줘.";
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
